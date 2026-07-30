@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 48" role="img" aria-label="TalentBridge">
+  <defs>
+    <linearGradient id="lg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="40" height="40" rx="11" fill="url(#lg)"/>
+  <path d="M14 17h20v4.5h-7.5V35h-5V21.5H14V17z" fill="#fff"/>
+  <text x="54" y="32" font-family="system-ui, sans-serif" font-size="21" font-weight="800" fill="#0F172A" letter-spacing="-0.5">TalentBridge</text>
+</svg>

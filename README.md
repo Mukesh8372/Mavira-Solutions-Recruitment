@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TalentBridge — Recruitment & Placement Platform
 
-## Getting Started
+A premium recruitment-agency website with a jobs engine, three role-based dashboards and an admin-as-CMS — built with Next.js 16, TypeScript (strict), Tailwind CSS v4, Prisma and NextAuth v5.
 
-First, run the development server:
+> Full product strategy, design system and architecture docs live in [`docs/`](docs/README.md).
+
+## Quick start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npx prisma migrate dev   # creates SQLite dev.db
+npx prisma db seed       # 33 jobs, 12 companies, blog, testimonials, demo users
+npm run dev              # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Demo logins (password: `Password@123`)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Role | Email | Lands on |
+|---|---|---|
+| Candidate | `candidate@talentbridge.dev` | `/dashboard` |
+| Employer | `employer@talentbridge.dev` | `/employer` |
+| Admin | `admin@talentbridge.dev` | `/admin` |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## What's inside
 
-## Learn More
+- **Public site** — Home, About, 7 service pages, industries, employer & candidate hubs, process, why-us, success stories, testimonials, FAQ, contact, blog, legal pages, designed 404.
+- **Jobs engine** — search + filters (department, experience, salary, type, mode) in URL params, sorting, pagination, job detail with JobPosting JSON-LD (Google Jobs-ready), guest apply flow with resume upload (creates a trackable shadow account), saved jobs, share.
+- **Candidate dashboard** — applications with live status, saved jobs, interviews with meeting links, resume manager, profile completion meter, notifications, settings.
+- **Employer dashboard** — post/manage jobs (admin-reviewed), application pipeline with status transitions + candidate notifications, interview scheduling, company profile, funnel reports, invoiced-ready schema.
+- **Admin dashboard (the CMS)** — moderate jobs (publish/feature), all applications, candidates, employers, leads pipeline, contact queries, blog authoring (markdown), testimonial approval, newsletter list, users & roles, audit log.
+- **SEO** — Metadata API everywhere, canonical URLs, Organization/WebSite/BreadcrumbList/JobPosting/FAQPage/Article JSON-LD, `sitemap.xml`, `robots.txt`.
+- **Security** — zod validation on every boundary, bcrypt(12), role checks in proxy + layouts + every server action, rate-limited public forms with honeypots, authorized-only resume file serving, security headers, audit logging.
+- **A11y & performance** — WCAG-minded components (labels, focus rings, aria, reduced-motion), RSC-first with client islands, self-hosted variable font, zero-image hero.
 
-To learn more about Next.js, take a look at the following resources:
+## Environment
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`.env` (see `.env.example`):
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+DATABASE_URL="file:./dev.db"
+AUTH_SECRET="generate-a-long-random-string"
+AUTH_TRUST_HOST=true
+NEXT_PUBLIC_SITE_URL="http://localhost:3000"
+```
 
-## Deploy on Vercel
+## Production notes
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Database**: switch `prisma/schema.prisma` provider to `postgresql`; convert the Json string-array columns to native `String[]` (documented in `docs/05-technical-architecture.md`).
+- **Uploads**: `src/lib/uploads.ts` is a local-disk adapter; swap for S3/UploadThing behind the same function signature. Resumes are served only through the authorized route `/api/v1/files/[name]`.
+- **Email**: password reset + notification email senders are stubbed (`src/features/auth/actions.ts`); wire Resend/SMTP.
+- **Rate limiting**: in-memory (single instance); swap for Upstash Ratelimit when scaling out.
+- Deployment pipeline, testing strategy and scalability roadmap: `docs/06-quality-plan.md`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Scripts
+
+| Command | Does |
+|---|---|
+| `npm run dev` | Dev server (Turbopack) |
+| `npm run build` / `start` | Production build / serve |
+| `npm run lint` | ESLint |
+| `npx tsc --noEmit` | Typecheck |
+| `npx prisma studio` | Browse the database |
+| `npx prisma db seed` | Re-seed demo data |
+
+## Rebranding
+
+All brand facts (name, phone, address, socials, SLA copy) live in `src/config/site.ts`. Colors/typography are CSS variables in `src/app/globals.css`.

@@ -1,0 +1,368 @@
+// TalentBridge — Prisma schema
+// Dev: SQLite (zero-setup). Prod: switch provider to "postgresql" and
+// convert Json string-array fields to String[] (see docs/05-technical-architecture.md).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+  EMPLOYER
+  CANDIDATE
+}
+
+enum JobStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  ARCHIVED
+}
+
+enum WorkMode {
+  ONSITE
+  REMOTE
+  HYBRID
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+}
+
+enum ApplicationStatus {
+  APPLIED
+  SCREENING
+  SHORTLISTED
+  INTERVIEW
+  OFFERED
+  PLACED
+  REJECTED
+  WITHDRAWN
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  LOST
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model User {
+  id               String            @id @default(cuid())
+  email            String            @unique
+  passwordHash     String?
+  name             String
+  phone            String?
+  role             Role              @default(CANDIDATE)
+  emailVerified    DateTime?
+  image            String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  candidateProfile CandidateProfile?
+  employerProfile  EmployerProfile?
+  postedJobs       Job[]             @relation("PostedJobs")
+  blogPosts        BlogPost[]
+  notifications    Notification[]
+  auditLogs        AuditLog[]
+}
+
+model CandidateProfile {
+  id              String        @id @default(cuid())
+  userId          String        @unique
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  headline        String?
+  summary         String?
+  experienceYears Int?
+  currentSalary   Int?
+  expectedSalary  Int?
+  location        String?
+  skills          Json          @default("[]") // string[]
+  profileScore    Int           @default(0)
+  resumes         Resume[]
+  applications    Application[]
+  savedJobs       SavedJob[]
+}
+
+model EmployerProfile {
+  id          String  @id @default(cuid())
+  userId      String  @unique
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId   String
+  company     Company @relation(fields: [companyId], references: [id])
+  designation String?
+}
+
+model Company {
+  id        String            @id @default(cuid())
+  name      String
+  slug      String            @unique
+  logoUrl   String?
+  website   String?
+  industry  String?
+  size      String?
+  about     String?
+  createdAt DateTime          @default(now())
+  jobs      Job[]
+  members   EmployerProfile[]
+}
+
+model Department {
+  id   String  @id @default(cuid())
+  name String
+  slug String  @unique
+  icon String?
+  jobs Job[]
+}
+
+model Industry {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  icon        String?
+  description String?
+  jobs        Job[]
+}
+
+model Job {
+  id               String         @id @default(cuid())
+  slug             String         @unique
+  title            String
+  description      String
+  responsibilities Json           @default("[]") // string[]
+  requirements     Json           @default("[]") // string[]
+  benefits         Json           @default("[]") // string[]
+  skills           Json           @default("[]") // string[]
+  departmentId     String
+  department       Department     @relation(fields: [departmentId], references: [id])
+  industryId       String?
+  industry         Industry?      @relation(fields: [industryId], references: [id])
+  location         String
+  workMode         WorkMode       @default(ONSITE)
+  employmentType   EmploymentType @default(FULL_TIME)
+  experienceMin    Int            @default(0)
+  experienceMax    Int            @default(0)
+  salaryMin        Int?
+  salaryMax        Int?
+  salaryVisible    Boolean        @default(true)
+  status           JobStatus      @default(DRAFT)
+  featured         Boolean        @default(false)
+  urgent           Boolean        @default(false)
+  validThrough     DateTime?
+  viewCount        Int            @default(0)
+  seoTitle         String?
+  seoDescription   String?
+  publishedAt      DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  companyId        String
+  company          Company        @relation(fields: [companyId], references: [id])
+  postedById       String?
+  postedBy         User?          @relation("PostedJobs", fields: [postedById], references: [id])
+  applications     Application[]
+  savedBy          SavedJob[]
+
+  @@index([status, publishedAt])
+  @@index([departmentId])
+  @@index([location])
+}
+
+model Application {
+  id            String            @id @default(cuid())
+  jobId         String
+  job           Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  candidateId   String
+  candidate     CandidateProfile  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  resumeId      String?
+  resume        Resume?           @relation(fields: [resumeId], references: [id])
+  coverNote     String?
+  status        ApplicationStatus @default(APPLIED)
+  statusHistory Json              @default("[]") // {status, at, note}[]
+  source        String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  interviews    Interview[]
+
+  @@unique([jobId, candidateId])
+  @@index([status])
+}
+
+model Interview {
+  id            String          @id @default(cuid())
+  applicationId String
+  application   Application     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  scheduledAt   DateTime
+  mode          String          @default("VIDEO") // CALL | VIDEO | ONSITE
+  location      String?
+  meetingUrl    String?
+  interviewer   String?
+  status        InterviewStatus @default(SCHEDULED)
+  feedback      String?
+  rating        Int?
+  createdAt     DateTime        @default(now())
+}
+
+model Resume {
+  id           String           @id @default(cuid())
+  candidateId  String
+  candidate    CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  fileUrl      String
+  fileName     String
+  mimeType     String
+  sizeBytes    Int
+  isPrimary    Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+  applications Application[]
+}
+
+model SavedJob {
+  id          String           @id @default(cuid())
+  candidateId String
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  jobId       String
+  job         Job              @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  createdAt   DateTime         @default(now())
+
+  @@unique([candidateId, jobId])
+}
+
+model BlogPost {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  title          String
+  excerpt        String
+  content        String // markdown
+  coverImage     String?
+  category       String // career-advice | hiring-insights | industry-news
+  tags           Json          @default("[]")
+  authorId       String
+  author         User          @relation(fields: [authorId], references: [id])
+  status         ContentStatus @default(DRAFT)
+  readMinutes    Int           @default(4)
+  seoTitle       String?
+  seoDescription String?
+  publishedAt    DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([status, publishedAt])
+}
+
+model Testimonial {
+  id         String   @id @default(cuid())
+  authorName String
+  authorRole String
+  company    String?
+  avatarUrl  String?
+  quote      String
+  rating     Int      @default(5)
+  kind       String   @default("CLIENT") // CLIENT | CANDIDATE
+  featured   Boolean  @default(false)
+  approved   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model SuccessStory {
+  id         String        @id @default(cuid())
+  slug       String        @unique
+  title      String
+  clientName String
+  industry   String
+  challenge  String
+  solution   String
+  results    Json          @default("[]") // string[]
+  metrics    Json          @default("[]") // {label, value}[]
+  coverImage String?
+  status     ContentStatus @default(PUBLISHED)
+  createdAt  DateTime      @default(now())
+}
+
+model Lead {
+  id          String     @id @default(cuid())
+  kind        String     @default("REQUEST_TALENT") // REQUEST_TALENT | GENERAL
+  companyName String?
+  name        String
+  email       String
+  phone       String
+  hiringType  String?
+  rolesNeeded String?
+  message     String?
+  status      LeadStatus @default(NEW)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model ContactQuery {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  audience  String   @default("OTHER") // EMPLOYER | CANDIDATE | OTHER
+  message   String
+  handled   Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model NewsletterSubscriber {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  createdAt      DateTime  @default(now())
+  unsubscribedAt DateTime?
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String?
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String
+  actor     User     @relation(fields: [actorId], references: [id])
+  action    String
+  entity    String
+  entityId  String
+  diff      Json?
+  createdAt DateTime @default(now())
+}
+
+model FaqItem {
+  id       String @id @default(cuid())
+  question String
+  answer   String
+  audience String @default("GENERAL") // EMPLOYER | CANDIDATE | GENERAL
+  order    Int    @default(0)
+}
+
+model Setting {
+  key   String @id
+  value Json
+}
