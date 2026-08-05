@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * This is a fast redirect layer only: real authorization is re-checked
  * server-side in each dashboard layout and every server action.
  */
-const protectedPrefixes = ["/dashboard", "/employer", "/admin"];
+const protectedPrefixes = ["/admin"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -23,5 +23,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/employer/:path*", "/admin/:path*"],
+  matcher: ["/admin/:path*"],
 };

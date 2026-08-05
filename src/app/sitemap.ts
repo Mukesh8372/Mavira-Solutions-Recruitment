@@ -8,10 +8,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteConfig.url;
 
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: `${base}/`, changeFrequency: "daily", priority: 1 },
-    { url: `${base}/jobs`, changeFrequency: "hourly", priority: 0.9 },
+    { url: `${base}/`, changeFrequency: "weekly", priority: 1 },
     { url: `${base}/employers`, changeFrequency: "monthly", priority: 0.9 },
-    { url: `${base}/candidates`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${base}/services`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${base}/industries`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${base}/about`, changeFrequency: "monthly", priority: 0.6 },
@@ -36,20 +34,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   ];
 
-  const [jobs, posts, departments, industries, stories] = await Promise.all([
-    prisma.job.findMany({ where: { status: "PUBLISHED" }, select: { slug: true, updatedAt: true } }),
+  const [posts, industries, stories] = await Promise.all([
     prisma.blogPost.findMany({ where: { status: "PUBLISHED" }, select: { slug: true, updatedAt: true } }),
-    prisma.department.findMany({ select: { slug: true } }),
     prisma.industry.findMany({ select: { slug: true } }),
     prisma.successStory.findMany({ where: { status: "PUBLISHED" }, select: { slug: true, createdAt: true } }),
   ]);
 
   return [
     ...staticRoutes,
-    ...jobs.map((j) => ({ url: `${base}/jobs/${j.slug}`, lastModified: j.updatedAt, changeFrequency: "daily" as const, priority: 0.8 })),
     ...posts.map((p) => ({ url: `${base}/blog/${p.slug}`, lastModified: p.updatedAt, changeFrequency: "monthly" as const, priority: 0.6 })),
-    ...departments.map((d) => ({ url: `${base}/jobs/category/${d.slug}`, changeFrequency: "daily" as const, priority: 0.7 })),
-    ...industries.map((i) => ({ url: `${base}/industries/${i.slug}`, changeFrequency: "weekly" as const, priority: 0.6 })),
+    ...industries.map((i) => ({ url: `${base}/industries/${i.slug}`, changeFrequency: "monthly" as const, priority: 0.6 })),
     ...stories.map((s) => ({ url: `${base}/success-stories/${s.slug}`, lastModified: s.createdAt, changeFrequency: "yearly" as const, priority: 0.5 })),
   ];
 }

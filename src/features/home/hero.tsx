@@ -24,7 +24,7 @@ export function Hero({ content }: { content: HeroContent }) {
         className="pointer-events-none absolute -top-40 right-[-10%] size-[640px] rounded-full opacity-60 blur-3xl"
         style={{
           background:
-            "radial-gradient(closest-side, rgba(37,99,235,.14), transparent 70%), radial-gradient(closest-side, rgba(124,58,237,.10), transparent 70%)",
+            "radial-gradient(closest-side, rgba(62,80,131,.14), transparent 70%), radial-gradient(closest-side, rgba(169,123,23,.10), transparent 70%)",
         }}
       />
 
@@ -56,10 +56,10 @@ export function Hero({ content }: { content: HeroContent }) {
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden />
             </Link>
             <Link
-              href="/jobs"
+              href="/services"
               className="inline-flex h-12 items-center rounded-btn border border-line bg-surface px-7 text-base font-semibold text-foreground shadow-soft transition-colors hover:border-faint active:scale-[0.98]"
             >
-              Browse open roles
+              Explore our services
             </Link>
           </motion.div>
 
@@ -89,12 +89,12 @@ function HeroIllustration({ reduced }: { reduced: boolean }) {
         animate={reduced ? undefined : { y: [0, -8, 0] }}
         transition={reduced ? undefined : { duration: 6, repeat: Infinity, ease: "easeInOut" }}
       >
-        <p className="text-[15px] font-bold text-foreground">Senior React Developer</p>
+        <p className="text-[15px] font-bold text-foreground">Relationship Manager — Wealth</p>
         <p className="mt-1 flex items-center gap-1 text-[12.5px] text-faint">
-          <MapPin className="size-3" /> Bengaluru · Hybrid · ₹28–36 LPA
+          <MapPin className="size-3" /> Mumbai · Full-time · BFSI
         </p>
         <div className="mt-3 flex gap-1.5">
-          <Badge variant="blue">Full-time</Badge>
+          <Badge variant="blue">Banking</Badge>
           <Badge variant="purple">5–8 yrs</Badge>
         </div>
       </motion.div>
@@ -111,7 +111,7 @@ function HeroIllustration({ reduced }: { reduced: boolean }) {
           </span>
           <div>
             <p className="text-[14.5px] font-bold text-foreground">Ananya S.</p>
-            <p className="text-[12px] text-faint">Product Designer · 6 yrs</p>
+            <p className="text-[12px] text-faint">Equity Dealer · NISM certified</p>
           </div>
         </div>
         <div className="mt-3">
@@ -129,8 +129,8 @@ function HeroIllustration({ reduced }: { reduced: boolean }) {
           <Check className="size-4" strokeWidth={3} />
         </span>
         <div>
-          <p className="text-[14.5px] font-bold text-foreground">Placed in 11 days</p>
-          <p className="text-[12px] text-faint">avg. time-to-offer, tech roles</p>
+          <p className="text-[14.5px] font-bold text-foreground">Placed &amp; onboarded</p>
+          <p className="text-[12px] text-faint">with follow-up beyond day one</p>
         </div>
       </motion.div>
 

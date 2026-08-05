@@ -9,8 +9,7 @@ import { Reveal, RevealGroup, RevealItem } from "@/components/shared/reveal";
 import { Icon, IconChip } from "@/components/shared/icon";
 import { JsonLd } from "@/components/shared/json-ld";
 import { breadcrumbJsonLd, faqJsonLd } from "@/lib/seo";
-import { StatsBand } from "@/features/home/stats-band";
-import { getApprovedTestimonials, getFaqs, getSiteStats } from "@/features/content/queries";
+import { getApprovedTestimonials, getFaqs } from "@/features/content/queries";
 import { RequestTalentForm } from "@/features/leads/request-talent-form";
 import { servicesContent } from "@/content/services";
 import { getProcessContent, getContactContent } from "@/features/site-content/queries";
@@ -19,7 +18,7 @@ import { siteConfig } from "@/config/site";
 export const metadata: Metadata = {
   title: "For Employers — Request Talent",
   description:
-    "Your next great hire is already in our pipeline. Screened shortlists in 3–5 days, success fees only, free replacement guarantee. Request talent and a delivery lead calls within one business day.",
+    "Specialist BFSI, broking and FinTech recruitment. Thoroughly vetted candidates, quick turnaround, complete confidentiality. Request talent and we respond within one business day.",
   alternates: { canonical: "/employers" },
 };
 
@@ -27,33 +26,32 @@ const painPoints = [
   {
     icon: "gauge",
     title: "Agencies that move at agency speed",
-    body: "A role open for eight weeks costs more than any fee. Our shortlists land in 3–5 business days for most roles, and every brief gets an honest timeline on the intake call — not after three follow-ups.",
+    body: "A role open for eight weeks costs more than any fee. Quality recruitment with unmatched quick turnaround time is our core strength — and every brief gets an honest timeline on the intake call.",
   },
   {
     icon: "file-clock",
     title: "Fifty resumes, zero screening",
-    body: "Forwarding a job-board export isn't recruitment. Every profile we send has been interviewed by a domain-specialist recruiter, with screening notes and comp expectations attached.",
+    body: "Forwarding a job-board export isn't recruitment. Every profile we send has been through resume screening, pre-filtering and a preliminary interview with a domain-specialist recruiter.",
   },
   {
     icon: "eye",
-    title: "Radio silence after the kickoff",
-    body: "You should never have to ask 'any update?'. A live pipeline view shows sourced, screened, shortlisted and scheduled — and interview feedback is closed within 24 hours.",
+    title: "Generalists guessing at your domain",
+    body: "BFSI, broking and FinTech roles carry products, licenses and targets a generalist can't screen for. Our recruiters know your industry inside and out.",
   },
 ];
 
 const trustBullets = [
-  "Shortlist in 3–5 business days for most roles",
+  "Deep expertise in BFSI, insurance, broking, NBFC and FinTech",
   "Success fee only — you pay when the candidate joins",
-  "Free replacement guarantee, stated in the engagement letter",
-  "Live pipeline visibility from day one",
+  "Structured 8-step methodology from intake to follow-up",
+  "Complete confidentiality at every step",
   "One delivery lead accountable end to end",
 ];
 
 const crumbs = [{ label: "Employers", href: "/employers" }];
 
 export default async function EmployersPage() {
-  const [stats, testimonials, faqs, { steps: recruitmentProcess }, contact] = await Promise.all([
-    getSiteStats(),
+  const [testimonials, faqs, { steps: recruitmentProcess }, contact] = await Promise.all([
     getApprovedTestimonials("CLIENT"),
     getFaqs("EMPLOYER"),
     getProcessContent(),
@@ -74,7 +72,7 @@ export default async function EmployersPage() {
           className="pointer-events-none absolute -top-40 right-[-10%] size-[560px] rounded-full opacity-60 blur-3xl"
           style={{
             background:
-              "radial-gradient(closest-side, rgba(37,99,235,.14), transparent 70%), radial-gradient(closest-side, rgba(124,58,237,.10), transparent 70%)",
+              "radial-gradient(closest-side, rgba(62,80,131,.14), transparent 70%), radial-gradient(closest-side, rgba(169,123,23,.10), transparent 70%)",
           }}
         />
         <div className="container-site relative pb-16 pt-4 md:pb-24">
@@ -84,9 +82,8 @@ export default async function EmployersPage() {
               Your next great hire is <span className="text-gradient">already in our pipeline</span>
             </h1>
             <p className="mt-5 max-w-2xl text-[17px] leading-relaxed text-body md:text-lg">
-              A 4-lakh candidate database, specialist recruiters in eight verticals, and a delivery engine that has
-              closed 12,000+ roles. Tell us what you need — the first shortlist usually lands before your next
-              weekly review.
+              A strong professional database, specialist recruiters across BFSI, broking and FinTech, and a
+              structured 8-step methodology. Tell us what you need — we respond within one business day.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <a
@@ -114,7 +111,7 @@ export default async function EmployersPage() {
           <SectionHeading
             eyebrow="Sound familiar?"
             title="Three ways hiring partners fail you"
-            lead="We built TalentBridge around the three complaints every HR head has about agencies."
+            lead="We built Mavira Solutions around the three complaints every HR head has about agencies."
           />
           <RevealGroup as="ul" className="grid gap-5 md:grid-cols-3">
             {painPoints.map((p, i) => (
@@ -134,8 +131,8 @@ export default async function EmployersPage() {
       <section className="container-site py-20 md:py-28" aria-label="Employer services">
         <SectionHeading
           eyebrow="What we run for you"
-          title="Seven services, one engagement letter"
-          lead="Mix and match — most clients start with one role and end up consolidating three vendors."
+          title="Five services, one engagement letter"
+          lead="From a single critical hire to staffing an entire branch — one accountable partner."
         />
         <RevealGroup as="ul" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {servicesContent.map((service) => (
@@ -179,8 +176,8 @@ export default async function EmployersPage() {
         <div className="container-site">
           <SectionHeading
             eyebrow="How it works"
-            title="From brief to joined, in four steps"
-            lead="A process honed over 12,000 placements — transparent at every stage."
+            title="From brief to joined — and beyond"
+            lead="A structured 8-step hiring methodology, transparent at every stage."
           />
           <RevealGroup as="ul" className="relative grid gap-8 md:grid-cols-4 md:gap-5">
             <div aria-hidden className="absolute left-0 right-0 top-6 hidden h-px bg-line md:block" />
@@ -199,8 +196,6 @@ export default async function EmployersPage() {
           </RevealGroup>
         </div>
       </section>
-
-      <StatsBand stats={stats} />
 
       {/* Client testimonials */}
       {clientQuotes.length > 0 && (

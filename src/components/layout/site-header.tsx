@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, ChevronDown, LayoutDashboard, Menu, Phone, UserRound, X } from "lucide-react";
+import { ArrowRight, ChevronDown, LayoutDashboard, Menu, Phone, X } from "lucide-react";
 import { Logo } from "@/components/layout/logo";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { mainNav, type NavGroup } from "@/config/nav";
@@ -50,7 +50,8 @@ export function SiteHeader({ contact = defaultContact }: { contact?: HeaderConta
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const pathname = usePathname();
   const user = useSessionUser();
-  const dashboardHref = user?.role ? roleDashboardPath[user.role] : null;
+  const rolePath = user?.role ? roleDashboardPath[user.role] : null;
+  const dashboardHref = rolePath && rolePath !== "/" ? rolePath : null;
 
   // Close the mobile menu on navigation (state adjustment during render).
   const [prevPathname, setPrevPathname] = React.useState(pathname);
@@ -109,7 +110,7 @@ export function SiteHeader({ contact = defaultContact }: { contact?: HeaderConta
             <Phone className="size-3.5" aria-hidden />
             {contact.phone}
           </a>
-          {dashboardHref ? (
+          {dashboardHref && (
             <Link
               href={dashboardHref}
               className="hidden shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-2 text-[13.5px] font-semibold text-body transition-colors hover:bg-primary-soft hover:text-primary lg:inline-flex xl:px-3"
@@ -117,22 +118,8 @@ export function SiteHeader({ contact = defaultContact }: { contact?: HeaderConta
               <LayoutDashboard className="size-4" aria-hidden />
               Dashboard
             </Link>
-          ) : (
-            <Link
-              href="/login"
-              className="hidden shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-2 text-[13.5px] font-semibold text-body transition-colors hover:bg-primary-soft hover:text-primary lg:inline-flex xl:px-3"
-            >
-              <UserRound className="size-4" aria-hidden />
-              Sign in
-            </Link>
           )}
           <ThemeToggle />
-          <Link
-            href="/candidates#upload-resume"
-            className="hidden h-10 shrink-0 items-center whitespace-nowrap rounded-btn border border-line bg-surface px-4 text-[13.5px] font-semibold text-foreground shadow-soft transition-colors hover:border-faint md:inline-flex xl:hidden 2xl:inline-flex"
-          >
-            Upload Resume
-          </Link>
           <Link
             href="/employers#request-talent"
             className="hidden h-10 shrink-0 items-center whitespace-nowrap rounded-btn bg-primary px-4 text-[13.5px] font-semibold text-white transition-all hover:bg-primary-strong hover:shadow-glow md:inline-flex"
@@ -288,23 +275,19 @@ function MobileNav({
               )
             )}
             <div className="mt-auto flex flex-col gap-2.5 border-t border-line pt-5">
-              <Link
-                href={dashboardHref ?? "/login"}
-                className="flex items-center gap-2 px-3 text-[14.5px] font-semibold text-primary"
-              >
-                {dashboardHref ? <LayoutDashboard className="size-4" aria-hidden /> : <UserRound className="size-4" aria-hidden />}
-                {dashboardHref ? "My dashboard" : "Sign in / Create account"}
-              </Link>
+              {dashboardHref && (
+                <Link
+                  href={dashboardHref}
+                  className="flex items-center gap-2 px-3 text-[14.5px] font-semibold text-primary"
+                >
+                  <LayoutDashboard className="size-4" aria-hidden />
+                  My dashboard
+                </Link>
+              )}
               <a href={contact.phoneHref} className="flex items-center gap-2 px-3 text-[14.5px] font-semibold text-body">
                 <Phone className="size-4" aria-hidden />
                 {contact.phone}
               </a>
-              <Link
-                href="/candidates#upload-resume"
-                className="inline-flex h-12 items-center justify-center rounded-btn border border-line bg-surface text-[15px] font-semibold text-foreground"
-              >
-                Upload Resume
-              </Link>
               <Link
                 href="/employers#request-talent"
                 className="inline-flex h-12 items-center justify-center rounded-btn bg-primary text-[15px] font-semibold text-white"

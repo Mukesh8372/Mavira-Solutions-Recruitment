@@ -13,7 +13,7 @@ export async function ProcessSection() {
         <SectionHeading
           eyebrow="How it works"
           title="From brief to joined, in four steps"
-          lead="A process honed over 12,000 placements — transparent at every stage, for both sides of the table."
+          lead="A structured 8-step hiring methodology — transparent at every stage, for both sides of the table."
         />
         <RevealGroup as="ul" className="relative grid gap-8 md:grid-cols-4 md:gap-5">
           {/* Connector line (desktop) */}

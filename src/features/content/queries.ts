@@ -1,8 +1,6 @@
 import "server-only";
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
-import { jsonValue } from "@/lib/utils";
-import type { SiteStats } from "@/features/home/stats-band";
 
 export const getApprovedTestimonials = cache(async (kind?: "CLIENT" | "CANDIDATE") => {
   return prisma.testimonial.findMany({
@@ -34,17 +32,10 @@ export const getFaqs = cache(async (audience?: "EMPLOYER" | "CANDIDATE" | "GENER
   });
 });
 
-const defaultStats: SiteStats & { offerJoinRate: number; avgShortlistDays: number } = {
-  candidatesPlaced: 12000,
-  clientCompanies: 500,
-  yearsExperience: 15,
-  googleRating: 4.9,
-  offerJoinRate: 91,
-  avgShortlistDays: 4,
-};
+export const getIndustries = cache(async () => {
+  return prisma.industry.findMany({ orderBy: { name: "asc" } });
+});
 
-export const getSiteStats = cache(async () => {
-  const row = await prisma.setting.findUnique({ where: { key: "site-stats" } });
-  if (!row) return defaultStats;
-  return { ...defaultStats, ...jsonValue<Partial<typeof defaultStats>>(row.value, {}) };
+export const getIndustryBySlug = cache(async (slug: string) => {
+  return prisma.industry.findUnique({ where: { slug } });
 });

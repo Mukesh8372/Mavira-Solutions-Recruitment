@@ -5,60 +5,45 @@ import {
   AnnouncementForm,
   ContactDetailsForm,
   HeroForm,
-  LogosForm,
   ProcessForm,
-  StatsForm,
-  TeamForm,
   WhyUsForm,
 } from "@/features/site-content/content-forms";
 import {
   getAchievements,
   getAnnouncement,
-  getClientLogos,
   getContactContent,
   getHeroContent,
   getProcessContent,
-  getTeam,
   getWhyUsContent,
 } from "@/features/site-content/queries";
-import { getSiteStats } from "@/features/content/queries";
 
 export const metadata: Metadata = { title: "Site content", robots: { index: false } };
 
 const sections = [
-  { id: "announcement", title: "Announcement bar", note: "Promo strip above the header on every public page — toggle on for drives and events." },
+  { id: "announcement", title: "Announcement bar", note: "Promo strip above the header on every public page — toggle on for events and updates." },
   { id: "hero", title: "Homepage hero", note: "Badge line, headline and supporting text at the top of the homepage." },
-  { id: "stats", title: "Statistics", note: "The animated counters shown on the homepage, employer page and about page." },
-  { id: "logos", title: "Trusted-by logos", note: "Company names in the rolling strip under the hero." },
-  { id: "process", title: "How it works", note: "The 4-step process shown on the homepage, employer page, process page and service pages." },
-  { id: "why-us", title: "Why TalentBridge", note: "The 4 differentiator cards on the homepage and why-choose-us page." },
-  { id: "achievements", title: "Awards & recognition", note: "The achievements strip on the homepage and about page." },
-  { id: "team", title: "Leadership team", note: "The team section on the about page." },
+  { id: "process", title: "How it works", note: "The 4-stage process shown on the homepage, employer page, process page and service pages." },
+  { id: "why-us", title: "Why Mavira Solutions", note: "The 4 differentiator cards on the homepage and why-choose-us page." },
+  { id: "achievements", title: "Registration & recognition", note: "The registration/recognition strip on the homepage and about page." },
   { id: "contact", title: "Contact details", note: "Phone, WhatsApp, email, address, hours and social links — used in the header, footer, contact page and search-engine data." },
 ] as const;
 
 export default async function SiteContentPage() {
-  const [hero, stats, logos, process, whyUs, announcement, achievements, team, contact] = await Promise.all([
+  const [hero, process, whyUs, announcement, achievements, contact] = await Promise.all([
     getHeroContent(),
-    getSiteStats(),
-    getClientLogos(),
     getProcessContent(),
     getWhyUsContent(),
     getAnnouncement(),
     getAchievements(),
-    getTeam(),
     getContactContent(),
   ]);
 
   const forms: Record<(typeof sections)[number]["id"], React.ReactNode> = {
     announcement: <AnnouncementForm initial={announcement} />,
     hero: <HeroForm initial={hero} />,
-    stats: <StatsForm initial={stats} />,
-    logos: <LogosForm initial={logos} />,
     process: <ProcessForm initial={process} />,
     "why-us": <WhyUsForm initial={whyUs} />,
     achievements: <AchievementsForm initial={achievements} />,
-    team: <TeamForm initial={team} />,
     contact: (
       <ContactDetailsForm
         initial={{

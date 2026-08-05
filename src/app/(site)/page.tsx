@@ -2,12 +2,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowRight, Award, Newspaper } from "lucide-react";
 import { Hero } from "@/features/home/hero";
-import { LogoMarquee } from "@/features/home/logo-marquee";
-import { StatsBand } from "@/features/home/stats-band";
 import { ServicesSection } from "@/features/home/services-section";
 import { IndustriesSection } from "@/features/home/industries-section";
 import { ProcessSection } from "@/features/home/process-section";
-import { FeaturedJobsSection } from "@/features/home/featured-jobs-section";
 import { WhyUsSection } from "@/features/home/why-us-section";
 import { TestimonialsCarousel } from "@/features/home/testimonials-carousel";
 import { BlogCard } from "@/features/blog/blog-card";
@@ -17,7 +14,7 @@ import { Accordion, AccordionItem } from "@/components/ui/accordion";
 import { CtaBand } from "@/components/shared/cta-band";
 import { JsonLd } from "@/components/shared/json-ld";
 import { websiteJsonLd, faqJsonLd } from "@/lib/seo";
-import { getFeaturedTestimonials, getFaqs, getSiteStats } from "@/features/content/queries";
+import { getFeaturedTestimonials, getFaqs } from "@/features/content/queries";
 import { getHeroContent, getAchievements } from "@/features/site-content/queries";
 import { getPublishedPosts } from "@/features/blog/queries";
 
@@ -30,10 +27,9 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [testimonials, faqs, stats, posts, hero, { items: achievements }] = await Promise.all([
+  const [testimonials, faqs, posts, hero, { items: achievements }] = await Promise.all([
     getFeaturedTestimonials(6),
     getFaqs(),
-    getSiteStats(),
     getPublishedPosts({ take: 3 }),
     getHeroContent(),
     getAchievements(),
@@ -43,12 +39,9 @@ export default async function HomePage() {
   return (
     <>
       <Hero content={hero} />
-      <LogoMarquee />
-      <StatsBand stats={stats} />
       <ServicesSection />
       <IndustriesSection />
       <ProcessSection />
-      <FeaturedJobsSection />
       <WhyUsSection />
 
       {/* Testimonials */}
@@ -56,7 +49,7 @@ export default async function HomePage() {
         <SectionHeading
           eyebrow="Social proof"
           title="What clients and candidates say"
-          lead="Real placements, real people — from HR heads closing critical roles to candidates landing their next chapter."
+          lead="Real placements, real people — from hiring managers closing critical roles to candidates landing their next chapter."
         />
         <Reveal>
           <TestimonialsCarousel

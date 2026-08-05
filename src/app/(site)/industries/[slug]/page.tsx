@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, FileSearch } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { Reveal, RevealGroup, RevealItem } from "@/components/shared/reveal";
@@ -9,32 +9,25 @@ import { Icon, IconChip } from "@/components/shared/icon";
 import { CtaBand } from "@/components/shared/cta-band";
 import { JsonLd } from "@/components/shared/json-ld";
 import { breadcrumbJsonLd } from "@/lib/seo";
-import { getIndustryBySlug, getJobsByIndustry } from "@/features/jobs/queries";
-import { JobCard } from "@/features/jobs/job-card";
+import { getIndustryBySlug } from "@/features/content/queries";
 import { servicesContent } from "@/content/services";
 
-/** Editorial extras per industry — typical role families we place most often. */
-const typicalRoles: Record<string, string[]> = {
-  "information-technology": ["Software engineers", "Product & design", "DevOps & data"],
-  "banking-financial-services": ["Credit & risk", "Relationship managers", "Compliance & ops"],
-  healthcare: ["Nursing & clinical", "Lab & diagnostics", "Pharma sales"],
-  manufacturing: ["Production & quality", "Plant finance", "Procurement"],
-  "retail-ecommerce": ["Store & area managers", "Growth marketing", "Category & merchandising"],
-  "logistics-supply-chain": ["Warehouse supervisors", "Fleet & last-mile ops", "Planning & analytics"],
-  hospitality: ["Front office & F&B", "Property leadership", "Guest experience"],
-  "engineering-infrastructure": ["Project engineers", "Site execution", "Design & planning"],
+/** Key positions we place per sector — from the Mavira Solutions company profile. */
+const keyRoles: Record<string, string[]> = {
+  "banking-financial-services": ["Relationship Manager", "Sales & Branch Manager", "Operations Executive", "Compliance Officer", "Team Leader"],
+  "insurance-wealth-management": ["Wealth Manager", "Relationship Manager", "Sales Manager", "Operations Executive", "Compliance Officer"],
+  "stock-broking-equity": ["Equity Dealer", "Relationship Manager", "Branch Manager", "Research Analyst"],
+  "nbfc-fintech": ["Relationship Manager", "Sales & Branch Manager", "Operations Executive", "Team Leader", "Compliance Officer"],
 };
 
-/** Services most relevant to each vertical (falls back to the core trio). */
+const defaultRoles = ["Relationship Manager", "Sales & Branch Manager", "Operations Executive", "Compliance Officer", "Team Leader"];
+
+/** Services most relevant to each sector. */
 const relatedServiceSlugs: Record<string, string[]> = {
-  "information-technology": ["permanent-hiring", "contract-staffing", "executive-search"],
-  "banking-financial-services": ["permanent-hiring", "executive-search", "bulk-hiring"],
-  healthcare: ["permanent-hiring", "bulk-hiring", "payroll-services"],
-  manufacturing: ["bulk-hiring", "contract-staffing", "executive-search"],
-  "retail-ecommerce": ["bulk-hiring", "permanent-hiring", "campus-hiring"],
-  "logistics-supply-chain": ["bulk-hiring", "contract-staffing", "payroll-services"],
-  hospitality: ["bulk-hiring", "permanent-hiring", "payroll-services"],
-  "engineering-infrastructure": ["contract-staffing", "permanent-hiring", "executive-search"],
+  "banking-financial-services": ["bfsi-recruitment", "permanent-recruitment", "bulk-hiring"],
+  "insurance-wealth-management": ["bfsi-recruitment", "permanent-recruitment", "executive-search"],
+  "stock-broking-equity": ["broking-recruitment", "permanent-recruitment", "bulk-hiring"],
+  "nbfc-fintech": ["bfsi-recruitment", "executive-search", "bulk-hiring"],
 };
 
 export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -42,8 +35,8 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
   const industry = await getIndustryBySlug(slug);
   if (!industry) return {};
   return {
-    title: `${industry.name} Recruitment — Jobs & Hiring`,
-    description: `${industry.description ?? `Specialist recruitment for ${industry.name}.`} Domain-specialist recruiters, live openings and 3–5 day shortlists from TalentBridge.`,
+    title: `${industry.name} Recruitment`,
+    description: `${industry.description ?? `Specialist recruitment for ${industry.name}.`} Domain-specialist recruiters and precise candidate matching from Mavira Solutions.`,
     alternates: { canonical: `/industries/${industry.slug}` },
   };
 }
@@ -53,22 +46,14 @@ export default async function IndustryDetailPage(props: { params: Promise<{ slug
   const industry = await getIndustryBySlug(slug);
   if (!industry) notFound();
 
-  const jobs = await getJobsByIndustry(industry.slug);
-  const cities = new Set(jobs.map((j) => j.location));
-  const roles = typicalRoles[industry.slug] ?? ["Individual contributors", "Team leads", "Functional managers"];
-  const related = (relatedServiceSlugs[industry.slug] ?? ["permanent-hiring", "contract-staffing", "bulk-hiring"])
+  const roles = keyRoles[industry.slug] ?? defaultRoles;
+  const related = (relatedServiceSlugs[industry.slug] ?? ["permanent-recruitment", "executive-search", "bulk-hiring"])
     .map((s) => servicesContent.find((svc) => svc.slug === s))
     .filter((s): s is (typeof servicesContent)[number] => Boolean(s));
 
   const crumbs = [
     { label: "Industries", href: "/industries" },
     { label: industry.name, href: `/industries/${industry.slug}` },
-  ];
-
-  const stats = [
-    { label: "roles open right now", value: String(jobs.length) },
-    { label: "typical roles we place", value: roles.join(" · "), small: true },
-    { label: cities.size === 1 ? "city hiring today" : "cities hiring today", value: String(cities.size || "—") },
   ];
 
   return (
@@ -88,65 +73,34 @@ export default async function IndustryDetailPage(props: { params: Promise<{ slug
             {industry.name} recruitment, <span className="text-gradient">done by insiders</span>
           </h1>
           <p className="mt-5 text-[17px] leading-relaxed text-body md:text-lg">
-            {industry.description} Our {industry.name.toLowerCase()} desk screens every candidate against the
-            realities of the role — not keywords — before a client or a candidate spends a minute on an interview.
+            {industry.description} Our deep industry knowledge ensures precise candidate matching for every role —
+            screened against the realities of the job, not keywords.
           </p>
-        </Reveal>
-
-        {/* Stats trio */}
-        <Reveal className="mt-10">
-          <dl className="grid gap-5 rounded-card border border-line bg-surface p-6 shadow-soft sm:grid-cols-3 md:p-8">
-            {stats.map((s) => (
-              <div key={s.label}>
-                <dd className={s.small ? "text-[15px] font-bold leading-snug text-foreground" : "text-3xl font-extrabold tracking-tight text-foreground md:text-4xl"}>
-                  {s.value}
-                </dd>
-                <dt className="mt-1 text-[13px] font-medium text-body">{s.label}</dt>
-              </div>
-            ))}
-          </dl>
         </Reveal>
       </section>
 
-      {/* Current openings */}
-      <section className="bg-background-alt py-20 md:py-28" aria-label="Current openings">
+      {/* Key roles */}
+      <section className="bg-background-alt py-20 md:py-28" aria-label="Key positions we place">
         <div className="container-site">
           <SectionHeading
-            eyebrow="Live now"
-            title={`Current openings in ${industry.name}`}
-            lead="Every listing is verified and actively worked by a specialist recruiter — no ghost jobs."
+            eyebrow="Key positions"
+            title={`Roles we place in ${industry.name}`}
+            lead="From front-line to leadership — every profile is vetted by a recruiter who knows the sector."
           />
-          {jobs.length > 0 ? (
-            <RevealGroup as="ul" className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {jobs.map((job) => (
-                <RevealItem as="li" key={job.id}>
-                  <JobCard job={job} />
-                </RevealItem>
-              ))}
-            </RevealGroup>
-          ) : (
-            <Reveal>
-              <div className="mx-auto flex max-w-md flex-col items-center gap-4 rounded-card border border-dashed border-line bg-surface p-10 text-center">
-                <span className="grid size-12 place-items-center rounded-full bg-primary-soft text-primary">
-                  <FileSearch className="size-5" aria-hidden />
+          <RevealGroup as="ul" className="mx-auto grid max-w-3xl gap-3 sm:grid-cols-2">
+            {roles.map((role) => (
+              <RevealItem
+                as="li"
+                key={role}
+                className="flex items-center gap-3 rounded-card border border-line bg-surface p-4 shadow-soft"
+              >
+                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
+                  <Check className="size-4" aria-hidden />
                 </span>
-                <div>
-                  <p className="text-[16px] font-bold text-foreground">No open roles right now</p>
-                  <p className="mt-1.5 text-[14px] leading-relaxed text-body">
-                    New {industry.name.toLowerCase()} roles open every week. Upload your resume and we&apos;ll call you
-                    the moment one matches.
-                  </p>
-                </div>
-                <Link
-                  href="/candidates#upload-resume"
-                  className="inline-flex h-11 items-center gap-2 rounded-btn bg-primary px-5 text-[14.5px] font-semibold text-white transition-all hover:bg-primary-strong hover:shadow-glow active:scale-[0.98]"
-                >
-                  Upload your resume
-                  <ArrowRight className="size-4" aria-hidden />
-                </Link>
-              </div>
-            </Reveal>
-          )}
+                <span className="text-[14.5px] font-semibold text-foreground">{role}</span>
+              </RevealItem>
+            ))}
+          </RevealGroup>
         </div>
       </section>
 
@@ -180,7 +134,7 @@ export default async function IndustryDetailPage(props: { params: Promise<{ slug
 
       <CtaBand
         title={`Hiring ${industry.name.toLowerCase()} talent?`}
-        lead="Put a domain-specialist desk on it — screened shortlist in 3–5 business days."
+        lead="Put a domain-specialist desk on it — thoroughly vetted candidates, quick turnaround."
       />
 
       <JsonLd data={breadcrumbJsonLd(crumbs)} />

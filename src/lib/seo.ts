@@ -26,7 +26,7 @@ export function organizationJsonLd(contact?: OrgContact) {
     name: siteConfig.name,
     legalName: siteConfig.legalName,
     url: siteConfig.url,
-    logo: `${siteConfig.url}/logo.svg`,
+    logo: `${siteConfig.url}/logo.png`,
     description: siteConfig.description,
     telephone: contact?.phone ?? siteConfig.phone,
     email: contact?.email ?? siteConfig.email,
@@ -40,11 +40,6 @@ export function organizationJsonLd(contact?: OrgContact) {
       addressCountry: siteConfig.address.country,
     },
     sameAs: Object.values(contact?.social ?? siteConfig.social),
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.9",
-      reviewCount: "830",
-    },
   };
 }
 
@@ -143,7 +138,7 @@ export function articleJsonLd(post: {
     ...(post.publishedAt ? { datePublished: post.publishedAt.toISOString() } : {}),
     dateModified: post.updatedAt.toISOString(),
     author: { "@type": "Person", name: post.authorName },
-    publisher: { "@type": "Organization", name: siteConfig.name, logo: { "@type": "ImageObject", url: `${siteConfig.url}/logo.svg` } },
+    publisher: { "@type": "Organization", name: siteConfig.name, logo: { "@type": "ImageObject", url: `${siteConfig.url}/logo.png` } },
     ...(post.coverImage ? { image: post.coverImage } : {}),
   };
 }

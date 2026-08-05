@@ -33,7 +33,7 @@ export async function SiteFooter() {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(4,1fr)]">
           <div className="max-w-xs">
             <Logo />
-            <p className="mt-4 text-[14px] leading-relaxed text-body">{siteConfig.tagline} Recruitment and staffing partners to 500+ companies across India since {siteConfig.founded}.</p>
+            <p className="mt-4 text-[14px] leading-relaxed text-body">{siteConfig.tagline} Specialist recruitment partners to India&apos;s BFSI, broking and FinTech companies.</p>
             <ul className="mt-5 space-y-2.5 text-[13.5px] text-body">
               <li className="flex items-start gap-2">
                 <MapPin className="mt-0.5 size-4 shrink-0 text-faint" aria-hidden />
@@ -76,11 +76,10 @@ export async function SiteFooter() {
         <div className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-line pt-8 text-[13px] text-faint">
           <span className="flex items-center gap-1.5">
             <ShieldCheck className="size-4 text-accent" aria-hidden />
-            ISO 9001:2015 certified
+            Officially registered &amp; legally compliant
           </span>
-          <span>NAPS registered partner</span>
-          <span>MSME &amp; Startup India recognised</span>
-          <span className="flex items-center gap-1">4.9★ on Google (830+ reviews)</span>
+          <span>CIN: {siteConfig.cin}</span>
+          <span>GSTIN: {siteConfig.gstin}</span>
         </div>
 
         {/* Bottom bar */}

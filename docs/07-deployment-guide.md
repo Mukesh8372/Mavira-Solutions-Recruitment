@@ -1,4 +1,4 @@
-# TalentBridge — Step-by-Step Deployment Guide
+# Mavira Solutions — Step-by-Step Deployment Guide
 
 **Goal:** take the project from this repository to a live website on your own GoDaddy domain, on free tiers, with database, emails, file uploads, rate limiting and cron jobs working.
 
@@ -123,7 +123,7 @@ SQLite (the dev database) cannot run on Vercel — its filesystem is wiped on ev
    (Email and storage variables come in Steps 4–5; the app runs without them.)
 6. Click **Deploy**. First build takes 2–3 minutes.
 
-✅ **Check:** open `https://<your-project>.vercel.app/api/health` → should show `{"ok":true,"db":true,...}`. Then open the homepage, log in with `admin@talentbridge.dev` / `Password@123`.
+✅ **Check:** open `https://<your-project>.vercel.app/api/health` → should show `{"ok":true,"db":true,...}`. Then open the homepage, log in with `admin@mavira.dev` / `Password@123`.
 
 > 🔐 **Immediately** go to Admin → Settings → change the admin password. Also change or delete the demo candidate/employer accounts (Admin → Users) before real launch.
 
@@ -157,7 +157,7 @@ Without this, "Apply with resume" and the admin Media library will fail in produ
    | Name | Value |
    |---|---|
    | `RESEND_API_KEY` | `re_...` (the key you copied) |
-   | `EMAIL_FROM` | `TalentBridge <notifications@yourcompany.com>` |
+   | `EMAIL_FROM` | `Mavira Solutions <notifications@yourcompany.com>` |
 
 8. Redeploy.
 

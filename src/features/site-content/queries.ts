@@ -30,11 +30,11 @@ import {
  */
 
 export const heroDefaults: HeroContent = {
-  badge: "15+ years · 12,000+ placements · 4.9★ rated",
-  headline: "The right people,",
-  headlineAccent: "faster.",
+  badge: "BFSI · Broking · FinTech recruitment specialists",
+  headline: "Connecting the right talent,",
+  headlineAccent: "with the right opportunity.",
   subtext:
-    "Recruitment and staffing partners for companies that can't afford a slow hire — and careers for people who deserve a better one.",
+    "Recruitment partners for banking, financial services, insurance, broking and FinTech companies that can't afford a slow hire — and careers for people who deserve a better one.",
   assurances: ["Free consultation", "Reply within 24 hours", "Zero fees for candidates"],
 };
 
@@ -66,7 +66,7 @@ async function readSetting<T>(key: string, schema: { safeParse: (v: unknown) => 
 
 export const contactDefaults: ContactContent = {
   phone: siteConfig.phone,
-  whatsapp: "+91 98765 00000",
+  whatsapp: "+91 79770 25412",
   email: siteConfig.email,
   street: siteConfig.address.street,
   city: siteConfig.address.city,
@@ -84,9 +84,9 @@ export const contactDefaults: ContactContent = {
 
 export const announcementDefaults: AnnouncementContent = {
   enabled: false,
-  text: "Walk-in drive this Saturday — 40+ roles across Bengaluru. Register now.",
-  linkLabel: "See open roles",
-  href: "/jobs",
+  text: "Hiring for BFSI, broking or FinTech? Tell us who you need.",
+  linkLabel: "Request talent",
+  href: "/employers#request-talent",
 };
 
 export const achievementsDefaults: AchievementsContent = { items: [...achievements] };
@@ -96,7 +96,7 @@ export const teamDefaults: TeamContent = {
     {
       name: "Rohan Mehta",
       role: "Founder & CEO",
-      bio: "Started TalentBridge in 2011 with two clients and a borrowed desk after a decade in IT services hiring. Still personally reviews every client escalation.",
+      bio: "Started Mavira Solutions after a decade in BFSI and broking hiring. Still personally reviews every client escalation.",
     },
     {
       name: "Kavita Iyer",

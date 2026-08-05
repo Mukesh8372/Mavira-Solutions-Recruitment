@@ -10,7 +10,6 @@ import {
   announcementSchema,
   contactSchema,
   contentKeys,
-  departmentSchema,
   faqSchema,
   heroSchema,
   industrySchema,
@@ -35,7 +34,7 @@ async function audit(actorId: string, action: string, entity: string, entityId: 
 }
 
 /** Pages that render each content block — revalidated together after a save. */
-const contentPaths = ["/", "/employers", "/candidates", "/process", "/why-choose-us", "/about", "/faq"];
+const contentPaths = ["/", "/employers", "/process", "/why-choose-us", "/about", "/faq"];
 
 function revalidateContentPages() {
   for (const path of contentPaths) revalidatePath(path);
@@ -153,7 +152,7 @@ export async function deleteFaq(id: string): Promise<ContentActionResult> {
 
 /* ---------------- Industry CRUD ---------------- */
 
-const industryPaths = ["/", "/industries", "/jobs"];
+const industryPaths = ["/", "/industries"];
 
 function revalidateIndustryPages() {
   for (const path of industryPaths) revalidatePath(path);
@@ -236,54 +235,6 @@ export async function deleteSuccessStory(id: string): Promise<ContentActionResul
   await audit(session.user.id, "content.story.delete", "SuccessStory", id, { title: existing.title });
   revalidateStoryPages();
   return { ok: true, message: "Story deleted" };
-}
-
-/* ---------------- Department (job category) CRUD ---------------- */
-
-function revalidateDepartmentPages() {
-  revalidatePath("/jobs");
-  revalidatePath("/jobs/category/[slug]", "page");
-}
-
-export async function saveDepartment(input: unknown, id?: string): Promise<ContentActionResult> {
-  const session = await requireStaff();
-  if (!session) return { ok: false, error: "You don't have permission to edit job categories." };
-
-  const parsed = departmentSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid category" };
-
-  if (id) {
-    const existing = await prisma.department.findUnique({ where: { id } });
-    if (!existing) return { ok: false, error: "Category not found." };
-    await prisma.department.update({ where: { id }, data: parsed.data });
-    await audit(session.user.id, "content.department.update", "Department", id);
-  } else {
-    const slug = slugify(parsed.data.name);
-    if (await prisma.department.findUnique({ where: { slug } })) {
-      return { ok: false, error: "A category with this name already exists." };
-    }
-    const created = await prisma.department.create({ data: { ...parsed.data, slug } });
-    await audit(session.user.id, "content.department.create", "Department", created.id);
-  }
-  revalidateDepartmentPages();
-  return { ok: true, message: id ? "Category updated" : "Category added" };
-}
-
-export async function deleteDepartment(id: string): Promise<ContentActionResult> {
-  const session = await requireStaff();
-  if (!session) return { ok: false, error: "You don't have permission to edit job categories." };
-  const existing = await prisma.department.findUnique({
-    where: { id },
-    include: { _count: { select: { jobs: true } } },
-  });
-  if (!existing) return { ok: false, error: "Category not found." };
-  if (existing._count.jobs > 0) {
-    return { ok: false, error: `"${existing.name}" has ${existing._count.jobs} job(s) attached — reassign them first.` };
-  }
-  await prisma.department.delete({ where: { id } });
-  await audit(session.user.id, "content.department.delete", "Department", id, { name: existing.name });
-  revalidateDepartmentPages();
-  return { ok: true, message: "Category deleted" };
 }
 
 export async function deleteIndustry(id: string): Promise<ContentActionResult> {

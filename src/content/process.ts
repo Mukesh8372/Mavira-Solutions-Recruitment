@@ -1,65 +1,65 @@
 export const recruitmentProcess = [
   {
     step: 1,
-    title: "Understand the brief",
+    title: "Understand & search",
     icon: "messages-square",
-    body: "A structured intake call with the hiring manager — role scope, must-haves vs nice-to-haves, comp band, team context and timeline. We push back where the brief fights the market.",
-    duration: "Day 0–1",
+    body: "We start with a structured intake — gaining deep comprehension of your requirement, team and expectations — then search suitable candidates through our professional database and industry network.",
+    duration: "Step 1–2",
   },
   {
     step: 2,
-    title: "Source & screen",
+    title: "Screen & pre-filter",
     icon: "search",
-    body: "Multi-channel sourcing — our 4-lakh candidate database, referrals, headhunting and targeted outreach. Every promising profile gets a structured interview with a domain-specialist recruiter.",
-    duration: "Day 1–4",
+    body: "Resume screening, pre-filtering and a preliminary interview with every promising profile. Only thoroughly vetted candidates move forward — no resume-dumping.",
+    duration: "Step 3–4",
   },
   {
     step: 3,
-    title: "Shortlist & interviews",
+    title: "Client interview & assessment",
     icon: "list-checks",
-    body: "You receive 3–5 vetted profiles with screening notes and comp expectations. We coordinate every interview round, collect feedback within 24 hours, and keep candidates warm.",
-    duration: "Day 4–14",
+    body: "You interview a focused shortlist. We coordinate every round, collect feedback quickly and keep candidates engaged throughout the assessment.",
+    duration: "Step 5–6",
   },
   {
     step: 4,
-    title: "Offer & onboarding",
+    title: "Offer, onboarding & follow-up",
     icon: "handshake",
-    body: "Comp benchmarking, offer negotiation, counter-offer management and pre-joining engagement until day one. Then 30-60-90 day check-ins through the guarantee period.",
-    duration: "Day 14+",
+    body: "Offer and salary negotiation, joining support and onboarding — then structured follow-up and relationship management well after day one.",
+    duration: "Step 7–8",
   },
 ] as const;
 
 export const whyChooseUs = [
   {
     icon: "target",
-    title: "Specialists, not generalists",
-    body: "Recruiters are organised by domain — IT, BFSI, healthcare, manufacturing — so the person screening your candidates speaks the language of the role.",
+    title: "Industry knowledge & expert team",
+    body: "Deep-rooted expertise in BFSI, banking, insurance, broking, NBFC and FinTech — we understand your industry inside and out, so screening speaks the language of the role.",
   },
   {
     icon: "gauge",
-    title: "Speed you can plan around",
-    body: "Shortlists in 3–5 business days for most roles, with a live status you can check any time. Time-to-offer averages 19 days across our desk.",
+    title: "Fast hiring process & quick turnaround",
+    body: "Quality recruitment with unmatched quick turnaround time is our core strength — a structured 8-step methodology keeps every search moving.",
   },
   {
-    icon: "eye",
-    title: "Radical transparency",
-    body: "Employers see the pipeline; candidates see their application status. Nobody chases us for updates — the dashboard already has them.",
+    icon: "search",
+    title: "Strong database & quality screening",
+    body: "A strong candidate database combined with rigorous screening — resume filtering, pre-interviews and reference checks — delivers the right talent, every time.",
   },
   {
     icon: "shield-check",
-    title: "Skin in the game",
-    body: "Success fees only, free replacement guarantees, and public numbers: 90%+ offer-to-join, 94% first-year retention, 4.9★ on Google.",
+    title: "Confidential, client-focused & professional",
+    body: "Complete confidentiality and a client-focused approach at every step — professional, reliable and tailored recruitment solutions across India.",
   },
 ] as const;
 
 export const clientLogos = [
-  "Finlark", "Crestline Bank", "Movox", "UrbanNest", "Sterling Gears", "Bluepeak",
-  "Verdant Hotels", "NovaCare", "GridAxis", "Kartloop", "Medanta Dx", "Apex HR",
+  "Banking", "Financial Services", "Insurance", "Wealth Management", "Stock Broking", "Equity",
+  "NBFC", "FinTech",
 ] as const;
 
 export const achievements = [
-  { year: "2024", title: "Best Recruitment Firm — Mid-size", org: "National Staffing Awards" },
-  { year: "2023", title: "Excellence in Bulk Hiring", org: "HR Association of India" },
-  { year: "2023", title: "Great Place to Work certified", org: "GPTW Institute" },
-  { year: "2022", title: "Top 10 Staffing Partners", org: "Business Standard HR Summit" },
+  { year: "2026", title: "Incorporated under MCA, Govt. of India", org: "CIN: U78300MR2026PTC476759" },
+  { year: "2026", title: "GST registered", org: "GSTIN: 27AAUCM9610M1ZN" },
+  { year: "2026", title: "BFSI, Broking & FinTech specialist desk", org: "Mavira Solutions" },
+  { year: "2026", title: "Pan-India recruitment coverage", org: "Registered office: Thane, Maharashtra" },
 ] as const;

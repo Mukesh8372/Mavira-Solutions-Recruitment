@@ -1,4 +1,4 @@
-# TalentBridge — Recruitment & Placement Platform
+# Mavira Solutions — Recruitment & Placement Platform
 
 A premium recruitment-agency website with a jobs engine, three role-based dashboards and an admin-as-CMS — built with Next.js 16, TypeScript (strict), Tailwind CSS v4, Prisma and NextAuth v5.
 
@@ -17,9 +17,9 @@ npm run dev              # http://localhost:3000
 
 | Role | Email | Lands on |
 |---|---|---|
-| Candidate | `candidate@talentbridge.dev` | `/dashboard` |
-| Employer | `employer@talentbridge.dev` | `/employer` |
-| Admin | `admin@talentbridge.dev` | `/admin` |
+| Candidate | `candidate@mavira.dev` | `/dashboard` |
+| Employer | `employer@mavira.dev` | `/employer` |
+| Admin | `admin@mavira.dev` | `/admin` |
 
 ## What's inside
 

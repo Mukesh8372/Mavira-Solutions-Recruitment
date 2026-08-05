@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { ArrowRight } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { ApplicationStatusBadge, LeadStatusBadge } from "@/components/dashboard/status-badge";
+import { LeadStatusBadge } from "@/components/dashboard/status-badge";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { TableShell, Table, THead, TH, TBody, TR, TD } from "@/components/dashboard/data-table";
 import { DashboardIcon } from "@/components/shared/dashboard-icon";
@@ -13,7 +13,7 @@ import { formatRelativeDate } from "@/lib/format";
 export const metadata: Metadata = { title: "Admin overview", robots: { index: false } };
 
 const quickLinks = [
-  { label: "Review jobs", href: "/admin/jobs", icon: "briefcase" },
+  { label: "Edit site content", href: "/admin/site-content", icon: "globe" },
   { label: "Work the leads", href: "/admin/leads", icon: "target" },
   { label: "Answer queries", href: "/admin/queries", icon: "mail" },
   { label: "Write a post", href: "/admin/blog/new", icon: "newspaper" },
@@ -24,17 +24,17 @@ export default async function AdminOverviewPage() {
 
   return (
     <>
-      <PageHeader title="Admin overview" description="Placement desk at a glance — jobs, pipeline and inbound." />
+      <PageHeader title="Admin overview" description="The website at a glance — inbound enquiries and site content." />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Jobs live" value={data.publishedJobs} icon="briefcase" tone="primary" hint={`${data.draftJobs} in draft`} />
-        <StatCard label="Applications" value={data.applicationsTotal} icon="inbox" tone="secondary" />
-        <StatCard label="Applications this week" value={data.applicationsThisWeek} icon="file-text" tone="accent" />
-        <StatCard label="Candidates" value={data.candidates} icon="users" tone="warning" />
-        <StatCard label="Companies" value={data.companies} icon="building" tone="primary" />
-        <StatCard label="New leads" value={data.newLeads} icon="target" tone="secondary" hint={data.newLeads > 0 ? "Waiting for first contact" : "All followed up"} />
-        <StatCard label="Unhandled queries" value={data.unhandledQueries} icon="mail" tone="accent" hint={data.unhandledQueries > 0 ? "Needs a reply" : "Inbox clear"} />
+        <StatCard label="New leads" value={data.newLeads} icon="target" tone="primary" hint={data.newLeads > 0 ? "Waiting for first contact" : "All followed up"} />
+        <StatCard label="Unhandled queries" value={data.unhandledQueries} icon="mail" tone="secondary" hint={data.unhandledQueries > 0 ? "Needs a reply" : "Inbox clear"} />
+        <StatCard label="Published posts" value={data.publishedPosts} icon="newspaper" tone="accent" hint={`${data.draftPosts} in draft`} />
         <StatCard label="Newsletter subscribers" value={data.subscribers} icon="send" tone="warning" />
+        <StatCard label="Testimonials" value={data.testimonials} icon="quote" tone="primary" hint={`${data.pendingTestimonials} awaiting approval`} />
+        <StatCard label="Success stories" value={data.successStories} icon="award" tone="secondary" />
+        <StatCard label="FAQs" value={data.faqs} icon="circle-help" tone="accent" />
+        <StatCard label="Industries" value={data.industries} icon="factory" tone="warning" />
       </div>
 
       <nav aria-label="Quick links" className="mt-6 flex flex-wrap gap-2.5">
@@ -52,38 +52,36 @@ export default async function AdminOverviewPage() {
       </nav>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-        <section aria-labelledby="recent-apps-heading">
+        <section aria-labelledby="recent-queries-heading">
           <div className="mb-3 flex items-center justify-between">
-            <h2 id="recent-apps-heading" className="text-[16px] font-bold">
-              Recent applications
+            <h2 id="recent-queries-heading" className="text-[16px] font-bold">
+              Recent contact queries
             </h2>
-            <Link href="/admin/applications" className="text-[13px] font-semibold text-primary hover:underline">
+            <Link href="/admin/queries" className="text-[13px] font-semibold text-primary hover:underline">
               View all
             </Link>
           </div>
-          {data.recentApplications.length === 0 ? (
-            <EmptyState icon="inbox" title="No applications yet" body="New applications from the jobs board will appear here." />
+          {data.recentQueries.length === 0 ? (
+            <EmptyState icon="mail" title="No queries yet" body="Messages from the contact form will appear here." />
           ) : (
             <TableShell>
               <Table>
                 <THead>
-                  <TH>Candidate</TH>
-                  <TH>Role</TH>
+                  <TH>From</TH>
+                  <TH>Audience</TH>
                   <TH>Status</TH>
-                  <TH>Applied</TH>
+                  <TH>Received</TH>
                 </THead>
                 <TBody>
-                  {data.recentApplications.map((app) => (
-                    <TR key={app.id}>
-                      <TD className="font-semibold text-foreground">{app.candidate.user.name}</TD>
-                      <TD>
-                        {app.job.title}
-                        <span className="block text-[12px] text-faint">{app.job.company.name}</span>
+                  {data.recentQueries.map((q) => (
+                    <TR key={q.id}>
+                      <TD className="font-semibold text-foreground">
+                        {q.name}
+                        <span className="block text-[12px] font-normal text-faint">{q.email}</span>
                       </TD>
-                      <TD>
-                        <ApplicationStatusBadge status={app.status} />
-                      </TD>
-                      <TD>{formatRelativeDate(app.createdAt)}</TD>
+                      <TD>{q.audience}</TD>
+                      <TD>{q.handled ? "Handled" : "Open"}</TD>
+                      <TD>{formatRelativeDate(q.createdAt)}</TD>
                     </TR>
                   ))}
                 </TBody>

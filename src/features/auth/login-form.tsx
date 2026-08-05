@@ -32,7 +32,7 @@ export function LoginForm({ next }: { next?: string }) {
     startTransition(async () => {
       const res = await loginWithCredentials({ ...values, next });
       if (res.ok) {
-        router.push(res.redirectTo ?? "/dashboard");
+        router.push(res.redirectTo ?? "/");
         router.refresh();
       } else {
         setServerError(res.error);

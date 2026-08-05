@@ -14,13 +14,11 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
 const HIRING_TYPES = [
-  "Permanent Hiring",
-  "Contract Staffing",
+  "Permanent Recruitment",
   "Executive Search",
   "Bulk Hiring",
-  "Campus Hiring",
-  "Payroll",
-  "HR Consulting",
+  "BFSI Recruitment",
+  "Broking Recruitment",
   "Not sure",
 ] as const;
 

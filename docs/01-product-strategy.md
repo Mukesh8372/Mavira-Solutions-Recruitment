@@ -1,6 +1,6 @@
 # 01 — Product Strategy & UX Research
 
-**Project:** TalentBridge — Recruitment & Placement Agency Platform
+**Project:** Mavira Solutions — Recruitment & Placement Agency Platform
 **Phase:** Pre-implementation strategy (Deliverables 1–2, 22 partial)
 **Date:** 2026-07-28
 
@@ -8,7 +8,7 @@
 
 ## 1. Positioning
 
-TalentBridge is a full-service recruitment and placement agency connecting employers with vetted talent across IT, BFSI, manufacturing, healthcare, retail, and logistics. The website's job is to do three things within 5 seconds of landing:
+Mavira Solutions is a full-service recruitment and placement agency connecting employers with vetted talent across IT, BFSI, manufacturing, healthcare, retail, and logistics. The website's job is to do three things within 5 seconds of landing:
 
 1. **Signal credibility** — this is an established, professional firm (stats, logos, testimonials, certifications).
 2. **Route the visitor** — every visitor is one of two people: *"I need to hire"* or *"I need a job."* The IA splits on this axis immediately.

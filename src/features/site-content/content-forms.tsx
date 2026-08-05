@@ -282,7 +282,7 @@ export function AnnouncementForm({ initial }: { initial: AnnouncementContent }) 
         </div>
         <div>
           <Label htmlFor="ann-href">Link (optional)</Label>
-          <Input id="ann-href" maxLength={200} placeholder="/jobs or https://…" value={form.href ?? ""} onChange={(e) => setForm({ ...form, href: e.target.value })} />
+          <Input id="ann-href" maxLength={200} placeholder="/contact or https://…" value={form.href ?? ""} onChange={(e) => setForm({ ...form, href: e.target.value })} />
         </div>
       </div>
       <div className="overflow-hidden rounded-lg">

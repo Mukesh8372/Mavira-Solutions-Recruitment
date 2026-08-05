@@ -9,43 +9,6 @@ import { rateLimit, clientKey } from "@/lib/rate-limit";
 
 export type AuthActionResult = { ok: true; redirectTo?: string } | { ok: false; error: string };
 
-const registerSchema = z.object({
-  name: z.string().trim().min(2, "Enter your full name"),
-  email: z.string().trim().email("Enter a valid email address"),
-  phone: z.string().trim().min(8, "Enter a valid phone number").max(16, "Enter a valid phone number"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  website: z.string().max(0).optional(), // honeypot
-});
-
-export async function registerCandidate(input: z.infer<typeof registerSchema>): Promise<AuthActionResult> {
-  const parsed = registerSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
-  if (parsed.data.website) return { ok: true };
-
-  const { ok } = rateLimit(await clientKey("register"), { limit: 5, windowMs: 300_000 });
-  if (!ok) return { ok: false, error: "Too many attempts. Please try again in a few minutes." };
-
-  const email = parsed.data.email.toLowerCase();
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    return { ok: false, error: "An account with this email already exists. Try signing in instead." };
-  }
-
-  await prisma.user.create({
-    data: {
-      email,
-      name: parsed.data.name,
-      phone: parsed.data.phone,
-      role: "CANDIDATE",
-      passwordHash: await hash(parsed.data.password, 12),
-      candidateProfile: { create: { profileScore: 20 } },
-    },
-  });
-
-  await signIn("credentials", { email, password: parsed.data.password, redirect: false });
-  return { ok: true, redirectTo: "/dashboard" };
-}
-
 const loginSchema = z.object({
   email: z.string().trim().email("Enter a valid email address"),
   password: z.string().min(1, "Enter your password"),
@@ -73,7 +36,7 @@ export async function loginWithCredentials(input: z.infer<typeof loginSchema>): 
   }
 
   const user = await prisma.user.findUnique({ where: { email: parsed.data.email.toLowerCase() } });
-  const fallback = user ? dashboardPathForRole[user.role] : "/dashboard";
+  const fallback = user ? dashboardPathForRole[user.role] : "/";
   // Only allow internal redirect targets.
   const next = parsed.data.next && parsed.data.next.startsWith("/") && !parsed.data.next.startsWith("//") ? parsed.data.next : null;
   return { ok: true, redirectTo: next ?? fallback };

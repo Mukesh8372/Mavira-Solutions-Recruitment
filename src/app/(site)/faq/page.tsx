@@ -8,12 +8,11 @@ import { JsonLd } from "@/components/shared/json-ld";
 import { breadcrumbJsonLd, faqJsonLd } from "@/lib/seo";
 import { getFaqs } from "@/features/content/queries";
 import { getContactContent } from "@/features/site-content/queries";
-import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "FAQ — Fees, Timelines, Guarantees & More",
   description:
-    "Everything employers and candidates ask us — fees and success models, shortlist timelines, replacement guarantees, application tracking and our zero-fee promise to candidates.",
+    "Everything employers and candidates ask us — fees and success models, timelines, replacement guarantees and our zero-fee promise to candidates.",
   alternates: { canonical: "/faq" },
 };
 

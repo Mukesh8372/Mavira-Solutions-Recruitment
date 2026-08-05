@@ -7,7 +7,7 @@
 ## 1. SEO strategy
 
 ### Technical
-- **Metadata API:** per-page `generateMetadata` — title template `%s | TalentBridge`, unique descriptions, canonical, OG + Twitter cards (dynamic OG images for jobs/blog via `next/og`).
+- **Metadata API:** per-page `generateMetadata` — title template `%s | Mavira Solutions`, unique descriptions, canonical, OG + Twitter cards (dynamic OG images for jobs/blog via `next/og`).
 - **JSON-LD helpers (`lib/seo.ts`), typed:**
   - `Organization` + `LocalBusiness` (NAP, geo, hours) — root layout
   - `WebSite` + SearchAction (sitelinks search box) — home

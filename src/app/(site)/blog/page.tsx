@@ -14,7 +14,7 @@ import { getBlogCategory, getPublishedPosts } from "@/features/blog/queries";
 export const metadata: Metadata = {
   title: "Blog — Career Advice, Hiring Insights & Industry News",
   description:
-    "Practical career advice for candidates and hiring playbooks for employers — written by the TalentBridge placement desk, not a content farm.",
+    "Practical career advice for candidates and hiring playbooks for employers — written by the Mavira Solutions placement desk, not a content farm.",
   alternates: { canonical: "/blog" },
 };
 
@@ -35,8 +35,8 @@ export default async function BlogIndexPage() {
           <span className="text-[13px] font-semibold uppercase tracking-[0.08em] text-primary">Insights</span>
           <h1 className="mt-2 text-4xl font-extrabold tracking-[-0.025em] md:text-5xl">From the placement desk</h1>
           <p className="mt-3 max-w-2xl text-[16px] leading-relaxed text-body">
-            Career advice for candidates, hiring playbooks for employers — field notes from a team that has closed 12,000+
-            placements.
+            Career advice for candidates, hiring playbooks for employers — field notes from a team that lives in BFSI,
+            broking and FinTech hiring.
           </p>
           <div className="mt-7">
             <CategoryChips />
@@ -110,10 +110,10 @@ export default async function BlogIndexPage() {
             </span>
             <h2 className="mt-5 text-xl font-bold">Articles are on the way</h2>
             <p className="mx-auto mt-2 max-w-md text-[14.5px] leading-relaxed text-body">
-              The placement desk is writing its first field notes. Meanwhile, the job board is very much open.
+              The placement desk is writing its first field notes. Meanwhile, we&apos;re one conversation away.
             </p>
-            <Link href="/jobs" className="mt-6 inline-flex items-center gap-1.5 text-[14.5px] font-semibold text-primary hover:underline">
-              Browse current openings
+            <Link href="/contact" className="mt-6 inline-flex items-center gap-1.5 text-[14.5px] font-semibold text-primary hover:underline">
+              Get in touch
               <ArrowRight className="size-4" aria-hidden />
             </Link>
           </div>

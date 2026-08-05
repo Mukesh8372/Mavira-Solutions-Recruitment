@@ -2,19 +2,23 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Brand palette from the Mavira Solutions profile deck:
+ * indigo-navy (#3e5083 family) on soft lavender (#f2f0f9), gold accent from the logo.
+ */
 :root {
   --background: #ffffff;
-  --background-alt: #f8fafc;
+  --background-alt: #f2f0f9;
   --surface: #ffffff;
-  --foreground: #0f172a;
-  --body: #475569;
-  --faint: #94a3b8;
-  --border-c: #e2e8f0;
-  --primary: #2563eb;
-  --primary-strong: #1d4ed8;
-  --primary-soft: rgba(37, 99, 235, 0.08);
-  --secondary: #7c3aed;
-  --secondary-soft: rgba(124, 58, 237, 0.08);
+  --foreground: #1c2340;
+  --body: #4a5273;
+  --faint: #8a90ad;
+  --border-c: #e3e1ef;
+  --primary: #3e5083;
+  --primary-strong: #2f4069;
+  --primary-soft: rgba(62, 80, 131, 0.09);
+  --secondary: #a97b17;
+  --secondary-soft: rgba(169, 123, 23, 0.1);
   --accent: #059669;
   --accent-soft: rgba(5, 150, 105, 0.1);
   --destructive: #dc2626;
@@ -23,23 +27,23 @@
 }
 
 .dark {
-  --background: #0b1120;
-  --background-alt: #0f172a;
-  --surface: #111827;
-  --foreground: #f1f5f9;
-  --body: #94a3b8;
-  --faint: #64748b;
-  --border-c: #1e293b;
-  --primary: #3b82f6;
-  --primary-strong: #60a5fa;
-  --primary-soft: rgba(59, 130, 246, 0.14);
-  --secondary: #8b5cf6;
-  --secondary-soft: rgba(139, 92, 246, 0.14);
+  --background: #0d1226;
+  --background-alt: #121830;
+  --surface: #171e3a;
+  --foreground: #eceffa;
+  --body: #a3abcc;
+  --faint: #6d7699;
+  --border-c: #232c4e;
+  --primary: #8fa3de;
+  --primary-strong: #a9bae8;
+  --primary-soft: rgba(143, 163, 222, 0.14);
+  --secondary: #d4a437;
+  --secondary-soft: rgba(212, 164, 55, 0.14);
   --accent: #10b981;
   --accent-soft: rgba(16, 185, 129, 0.14);
   --destructive: #ef4444;
   --warning: #f59e0b;
-  --glass: rgba(17, 24, 39, 0.72);
+  --glass: rgba(18, 24, 48, 0.72);
 }
 
 @theme inline {
@@ -67,10 +71,10 @@
   --radius-card: 16px;
   --radius-modal: 20px;
 
-  --shadow-soft: 0 1px 2px rgb(15 23 42 / 0.06);
-  --shadow-card: 0 4px 12px -2px rgb(15 23 42 / 0.08);
-  --shadow-lift: 0 12px 32px -8px rgb(15 23 42 / 0.14);
-  --shadow-glow: 0 8px 24px -6px rgb(37 99 235 / 0.35);
+  --shadow-soft: 0 1px 2px rgb(28 35 64 / 0.06);
+  --shadow-card: 0 4px 12px -2px rgb(28 35 64 / 0.08);
+  --shadow-lift: 0 12px 32px -8px rgb(28 35 64 / 0.14);
+  --shadow-glow: 0 8px 24px -6px rgb(62 80 131 / 0.35);
 
   --animate-marquee: marquee 32s linear infinite;
   --animate-float: float 6s ease-in-out infinite;
@@ -124,7 +128,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @utility bg-brand-gradient {
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  background: linear-gradient(135deg, #2f4069, #5a6fae);
 }
 
 @utility glass {

@@ -10,7 +10,7 @@ export async function WhyUsSection() {
     <section className="bg-background-alt py-20 md:py-28" aria-labelledby="why-us-heading">
       <div className="container-site grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
         <Reveal className="lg:sticky lg:top-28 lg:self-start">
-          <span className="text-[13px] font-semibold uppercase tracking-[0.08em] text-primary">Why TalentBridge</span>
+          <span className="text-[13px] font-semibold uppercase tracking-[0.08em] text-primary">Why Mavira Solutions</span>
           <h2 id="why-us-heading" className="mt-3 text-3xl font-bold tracking-tight md:text-[40px] md:leading-[1.2]">
             Agencies send resumes. <br className="hidden md:block" />
             We send <span className="text-gradient">answers.</span>

@@ -10,33 +10,33 @@ import { breadcrumbJsonLd } from "@/lib/seo";
 import { getProcessContent } from "@/features/site-content/queries";
 
 export const metadata: Metadata = {
-  title: "Our Recruitment Process — Brief to Joined in Four Steps",
+  title: "Our Recruitment Process — A Structured 8-Step Methodology",
   description:
-    "How TalentBridge runs a search: structured intake, specialist screening, a 3–5 day shortlist, 24-hour feedback loops and support through day one — with SLAs at every stage.",
+    "How Mavira Solutions runs a search: understand the requirement, search and screen, client interviews and assessment, then offer, onboarding and follow-up — a structured 8-step hiring methodology.",
   alternates: { canonical: "/process" },
 };
 
-/** Editorial detail layered on top of the shared four-step content. */
+/** Editorial detail layered on top of the shared process content. */
 const stepDetail: Record<number, string[]> = {
   1: [
-    "Role scorecard agreed in writing — must-haves vs nice-to-haves",
-    "Comp band benchmarked against live market data, not last year's survey",
+    "Deep comprehension of the role, team and expectations — agreed in writing",
+    "Search across our professional database, referrals and targeted headhunting",
     "Interview panel, rounds and decision-makers locked upfront",
   ],
   2: [
-    "4-lakh candidate database + referrals + targeted headhunting",
-    "Structured interview by a domain-specialist recruiter",
-    "Comp expectations and notice periods verified before shortlisting",
+    "Resume screening and pre-filtering against the agreed scorecard",
+    "Preliminary interview by a domain-specialist recruiter",
+    "Certifications, comp expectations and notice periods verified before shortlisting",
   ],
   3: [
-    "3–5 vetted profiles with screening notes — never a resume dump",
+    "Vetted profiles with screening notes — never a resume dump",
     "All scheduling handled by us, across every round",
-    "Your feedback closed within 24 hours; candidates kept warm throughout",
+    "Fast feedback loops in both directions; candidates kept engaged throughout",
   ],
   4: [
-    "Offer benchmarking and counter-offer risk management",
-    "Pre-joining engagement until day one — our offer-to-join rate is 90%+",
-    "30-60-90 day check-ins through the guarantee period",
+    "Offer and salary negotiation managed end to end",
+    "Joining support and onboarding coordination until day one",
+    "Follow-up and relationship management well beyond joining",
   ],
 };
 
@@ -48,8 +48,8 @@ const yourPart = [
   },
   {
     icon: "gauge",
-    title: "Feedback within 24 hours",
-    body: "Strong candidates hold for days, not weeks. Clients who close feedback inside a day hire 2× faster — it's the single biggest factor you control.",
+    title: "Fast interview feedback",
+    body: "Strong candidates hold for days, not weeks. Closing feedback quickly after each round is the single biggest factor you control.",
   },
   {
     icon: "list-checks",
@@ -61,21 +61,21 @@ const yourPart = [
 const slas = [
   {
     icon: CalendarCheck,
-    value: "3–5 days",
-    title: "First shortlist",
-    body: "Screened, interviewed profiles for most mid-level roles — with an honest timeline upfront for niche and leadership searches.",
+    value: "1 biz day",
+    title: "First response",
+    body: "Every new brief gets a response within one business day — and an honest timeline for your specific role and market on the intake call.",
   },
   {
     icon: AlarmClock,
-    value: "24 hours",
-    title: "Feedback loop",
-    body: "Every interview's feedback collected and relayed within a business day — both directions, no chasing.",
+    value: "8 steps",
+    title: "Structured methodology",
+    body: "The same structured hiring methodology on every search — from understanding the requirement to follow-up after joining.",
   },
   {
     icon: ShieldCheck,
-    value: "90 days",
+    value: "In writing",
     title: "Replacement guarantee",
-    body: "If a permanent placement exits in the guarantee period, we replace them free. It's in the engagement letter.",
+    body: "If a permanent placement exits in the agreed guarantee period, we replace them free. It's in the engagement letter.",
   },
 ];
 
@@ -94,7 +94,7 @@ export default async function ProcessPage() {
         <Reveal className="max-w-3xl">
           <span className="text-[13px] font-semibold uppercase tracking-[0.08em] text-primary">How we work</span>
           <h1 id="process-heading" className="mt-3 text-4xl font-extrabold tracking-[-0.025em] md:text-5xl">
-            A process honed over <span className="text-gradient">12,000 placements</span>
+            A structured <span className="text-gradient">8-step methodology</span>
           </h1>
           <p className="mt-5 text-[17px] leading-relaxed text-body md:text-lg">
             No mystery, no &ldquo;trust us&rdquo; — here is exactly what happens after you brief us, what happens at
@@ -145,7 +145,7 @@ export default async function ProcessPage() {
         <SectionHeading
           eyebrow="Your part"
           title="What we need from you"
-          lead="Three asks. Clients who deliver all three hire in half the time — we track it."
+          lead="Three asks. Clients who deliver all three hire dramatically faster."
         />
         <RevealGroup as="ul" className="grid gap-5 md:grid-cols-3">
           {yourPart.map((item, i) => (

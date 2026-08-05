@@ -11,9 +11,9 @@ import { breadcrumbJsonLd } from "@/lib/seo";
 import { servicesContent } from "@/content/services";
 
 export const metadata: Metadata = {
-  title: "Recruitment & Staffing Services",
+  title: "Recruitment Services — Permanent, Executive & Bulk Hiring",
   description:
-    "Permanent hiring, contract staffing, executive search, bulk and campus hiring, payroll and HR consulting — one accountable partner across the talent lifecycle. Success-fee models, 3–5 day shortlists.",
+    "Permanent recruitment, executive search, bulk hiring, and specialist BFSI & broking desks — one accountable partner across the talent lifecycle, on a success-fee model.",
   alternates: { canonical: "/services" },
 };
 
@@ -79,7 +79,7 @@ export default function ServicesPage() {
         <SectionHeading
           eyebrow="Start here"
           title="Two sides, one bridge"
-          lead="Everything above is for employers. If you're a candidate, our entire service is free — and always will be."
+          lead="Hiring for your team, or exploring your own next move — either way, start with a conversation."
         />
         <RevealGroup className="grid gap-5 md:grid-cols-2">
           <RevealItem>
@@ -89,7 +89,7 @@ export default function ServicesPage() {
               </span>
               <h3 className="mt-5 text-xl font-bold">I&apos;m hiring</h3>
               <ul className="mt-4 flex-1 space-y-2.5">
-                {["Screened shortlist in 3–5 business days", "Success fees only — pay on joining", "Free replacement guarantee, in writing"].map((item) => (
+                {["Thoroughly vetted candidates, quick turnaround", "Success fees only — pay on joining", "BFSI, broking & FinTech specialists"].map((item) => (
                   <li key={item} className="flex items-start gap-2 text-[14.5px] text-body">
                     <Check className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
                     {item}
@@ -112,7 +112,7 @@ export default function ServicesPage() {
               </span>
               <h3 className="mt-5 text-xl font-bold">I&apos;m looking for a job</h3>
               <ul className="mt-4 flex-1 space-y-2.5">
-                {["Zero fees at every stage — always", "Track your application status live", "Free resume review and interview prep"].map((item) => (
+                {["Zero fees at every stage — always", "Careers across BFSI, broking & FinTech", "Guidance through offer and onboarding"].map((item) => (
                   <li key={item} className="flex items-start gap-2 text-[14.5px] text-body">
                     <Check className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
                     {item}
@@ -120,10 +120,10 @@ export default function ServicesPage() {
                 ))}
               </ul>
               <Link
-                href="/candidates"
+                href="/contact"
                 className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-btn border border-line bg-surface px-5 text-[15px] font-semibold text-foreground shadow-soft transition-colors hover:border-faint active:scale-[0.98]"
               >
-                Explore candidate services
+                Send us your resume
                 <ArrowRight className="size-4" aria-hidden />
               </Link>
             </div>

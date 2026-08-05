@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, clientKey } from "@/lib/rate-limit";
+import { sendNotification } from "@/lib/mail";
 
 const contactSchema = z.object({
   name: z.string().trim().min(2, "Enter your full name").max(80),
@@ -36,6 +37,18 @@ export async function createContactQuery(input: ContactInput): Promise<ContactRe
       audience: parsed.data.audience,
       message: parsed.data.message,
     },
+  });
+
+  await sendNotification({
+    subject: `New contact query from ${parsed.data.name}`,
+    replyTo: parsed.data.email,
+    rows: [
+      ["Name", parsed.data.name],
+      ["Email", parsed.data.email],
+      ["Phone", parsed.data.phone || "—"],
+      ["Enquiring as", parsed.data.audience],
+      ["Message", parsed.data.message],
+    ],
   });
 
   return { ok: true };

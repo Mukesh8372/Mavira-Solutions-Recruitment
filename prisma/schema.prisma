@@ -1,13 +1,13 @@
-// TalentBridge — Prisma schema
-// Dev: SQLite (zero-setup). Prod: switch provider to "postgresql" and
-// convert Json string-array fields to String[] (see docs/05-technical-architecture.md).
+// Mavira Solutions — Prisma schema
+// Postgres (Neon) in all environments. JSON-ish array fields are stored as
+// JSON strings for portability (see src/lib/utils jsonArray/jsonValue).
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

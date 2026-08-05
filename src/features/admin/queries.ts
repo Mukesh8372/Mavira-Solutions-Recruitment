@@ -1,110 +1,52 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
-import type { ApplicationStatus, JobStatus, LeadStatus } from "@prisma/client";
+import type { LeadStatus } from "@prisma/client";
 
 /** Admin lists are capped at the 50 most recent rows — enough for daily ops without pagination. */
 const PAGE_SIZE = 50;
 
 export async function getAdminOverview() {
-  const weekAgo = new Date(Date.now() - 7 * 86_400_000);
   const [
-    publishedJobs,
-    draftJobs,
-    applicationsTotal,
-    applicationsThisWeek,
-    candidates,
-    companies,
     newLeads,
     unhandledQueries,
+    publishedPosts,
+    draftPosts,
     subscribers,
-    recentApplications,
+    testimonials,
+    pendingTestimonials,
+    successStories,
+    faqs,
+    industries,
+    recentQueries,
     recentLeads,
   ] = await Promise.all([
-    prisma.job.count({ where: { status: "PUBLISHED" } }),
-    prisma.job.count({ where: { status: "DRAFT" } }),
-    prisma.application.count(),
-    prisma.application.count({ where: { createdAt: { gte: weekAgo } } }),
-    prisma.candidateProfile.count(),
-    prisma.company.count(),
     prisma.lead.count({ where: { status: "NEW" } }),
     prisma.contactQuery.count({ where: { handled: false } }),
+    prisma.blogPost.count({ where: { status: "PUBLISHED" } }),
+    prisma.blogPost.count({ where: { status: "DRAFT" } }),
     prisma.newsletterSubscriber.count({ where: { unsubscribedAt: null } }),
-    prisma.application.findMany({
-      include: { candidate: { include: { user: true } }, job: { include: { company: true } } },
-      orderBy: { createdAt: "desc" },
-      take: 6,
-    }),
+    prisma.testimonial.count(),
+    prisma.testimonial.count({ where: { approved: false } }),
+    prisma.successStory.count({ where: { status: "PUBLISHED" } }),
+    prisma.faqItem.count(),
+    prisma.industry.count(),
+    prisma.contactQuery.findMany({ orderBy: { createdAt: "desc" }, take: 6 }),
     prisma.lead.findMany({ orderBy: { createdAt: "desc" }, take: 4 }),
   ]);
   return {
-    publishedJobs,
-    draftJobs,
-    applicationsTotal,
-    applicationsThisWeek,
-    candidates,
-    companies,
     newLeads,
     unhandledQueries,
+    publishedPosts,
+    draftPosts,
     subscribers,
-    recentApplications,
+    testimonials,
+    pendingTestimonials,
+    successStories,
+    faqs,
+    industries,
+    recentQueries,
     recentLeads,
   };
-}
-
-export async function getAdminJobs(status?: JobStatus) {
-  return prisma.job.findMany({
-    where: status ? { status } : undefined,
-    include: { company: true, department: true, _count: { select: { applications: true } } },
-    orderBy: { createdAt: "desc" },
-    take: PAGE_SIZE,
-  });
-}
-
-export async function getAdminApplications(status?: ApplicationStatus) {
-  return prisma.application.findMany({
-    where: status ? { status } : undefined,
-    include: {
-      candidate: { include: { user: true } },
-      job: { include: { company: true } },
-      resume: true,
-    },
-    orderBy: { createdAt: "desc" },
-    take: PAGE_SIZE,
-  });
-}
-
-export async function getAdminCandidates() {
-  return prisma.candidateProfile.findMany({
-    include: {
-      user: true,
-      _count: { select: { applications: true, resumes: true } },
-    },
-    orderBy: { user: { createdAt: "desc" } },
-    take: PAGE_SIZE,
-  });
-}
-
-export async function getAdminEmployers() {
-  return prisma.company.findMany({
-    include: {
-      members: { include: { user: true } },
-      _count: { select: { jobs: true } },
-    },
-    orderBy: { createdAt: "desc" },
-    take: PAGE_SIZE,
-  });
-}
-
-export async function getAdminInterviews() {
-  return prisma.interview.findMany({
-    include: {
-      application: {
-        include: { job: { include: { company: true } }, candidate: { include: { user: true } } },
-      },
-    },
-    orderBy: { scheduledAt: "desc" },
-    take: PAGE_SIZE,
-  });
 }
 
 export async function getAdminLeads(status?: LeadStatus) {

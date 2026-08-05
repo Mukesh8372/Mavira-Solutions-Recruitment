@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { Award } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
+import { Award, Compass, Flag, Gem } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { Reveal, RevealGroup, RevealItem } from "@/components/shared/reveal";
@@ -8,14 +7,12 @@ import { IconChip } from "@/components/shared/icon";
 import { CtaBand } from "@/components/shared/cta-band";
 import { JsonLd } from "@/components/shared/json-ld";
 import { breadcrumbJsonLd } from "@/lib/seo";
-import { StatsBand } from "@/features/home/stats-band";
-import { getSiteStats } from "@/features/content/queries";
-import { getAchievements, getTeam } from "@/features/site-content/queries";
+import { getAchievements } from "@/features/site-content/queries";
 import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
-  title: "About Us — Our Story, Values & Leadership",
-  description: `${siteConfig.name} has connected employers with vetted talent since ${siteConfig.founded} — 12,000+ placements, 500+ client companies, one promise: the right people, faster. Meet the team behind the numbers.`,
+  title: "About Us — Our Story, Vision & Mission",
+  description: `${siteConfig.legalName} is a premier recruitment company for the BFSI and Broking industries — bridging the gap between exceptional talent and outstanding opportunities across India.`,
   alternates: { canonical: "/about" },
 };
 
@@ -23,40 +20,47 @@ const values = [
   {
     icon: "target",
     title: "Specialism over spray-and-pray",
-    body: "Recruiters are organised by domain, not by desk availability. The person screening a credit-risk analyst has screened a hundred of them — that's the difference between a shortlist and a resume dump.",
+    body: "Our recruiters live in BFSI, broking and FinTech. The person screening a wealth RM or an equity dealer has screened a hundred of them — that's the difference between a shortlist and a resume dump.",
   },
   {
     icon: "eye",
-    title: "Transparency as default",
-    body: "Employers see the live pipeline. Candidates see their application status. Our fees, guarantees and success rates are written down and public — nothing lives in the fine print.",
+    title: "Quality and trust first",
+    body: "Founded with a commitment to quality and trust — every candidate is thoroughly vetted before a client sees them, and both sides hear the truth about the market.",
   },
   {
     icon: "shield-check",
-    title: "Skin in the game",
-    body: "Success fees only, free replacement guarantees, and zero charges for candidates — ever. When our incentives match yours, quality stops being a promise and becomes a business model.",
+    title: "Complete confidentiality",
+    body: "Searches, briefs and candidate conversations stay confidential at every step — professional, reliable and discreet.",
   },
   {
     icon: "handshake",
     title: "People, not positions",
-    body: "A placement is someone's next three years, not a line item. We stay engaged through offer, joining and the first 90 days — because a hire that doesn't stick helps nobody.",
+    body: "A placement is someone's next three years, not a line item. We stay engaged through offer, joining and follow-up — because a hire that doesn't stick helps nobody.",
   },
 ];
 
-
-const milestones = [
-  { year: "2011", text: "Founded in Bengaluru with a two-person team and a focus on IT hiring." },
-  { year: "2014", text: "Expanded into BFSI and manufacturing; crossed 1,000 placements." },
-  { year: "2017", text: "Launched contract staffing and payroll services; opened Mumbai and Delhi NCR offices." },
-  { year: "2020", text: "Built candidate status tracking — every applicant sees where they stand, no black holes." },
-  { year: "2022", text: "Crossed 10,000 placements; executive search practice formalised." },
-  { year: "2024", text: "Named Best Recruitment Firm (Mid-size) at the National Staffing Awards." },
+const pillars = [
+  {
+    icon: Compass,
+    title: "Our Vision",
+    body: "To become a trusted, nationally recognized recruitment partner by consistently providing reliable, efficient and tailored hiring solutions across India — bridging talent with opportunity in the BFSI and FinTech sectors.",
+  },
+  {
+    icon: Flag,
+    title: "Our Mission",
+    body: "To deliver top-tier recruitment services by gaining deep comprehension of client requirements, providing thoroughly vetted candidates within optimal timelines, and building enduring trust-based relationships with both clients and candidates.",
+  },
+  {
+    icon: Gem,
+    title: "Our Core Strength",
+    body: "Quality recruitment with unmatched quick turnaround time — combining industry expertise, a strong professional database, and a client-focused approach to deliver the right talent, every time.",
+  },
 ];
 
 const crumbs = [{ label: "About", href: "/about" }];
 
 export default async function AboutPage() {
-  const [{ items: achievements }, { members: leaders }] = await Promise.all([getAchievements(), getTeam()]);
-  const stats = await getSiteStats();
+  const { items: achievements } = await getAchievements();
 
   return (
     <>
@@ -68,44 +72,48 @@ export default async function AboutPage() {
       <section className="container-site pb-16 pt-4 md:pb-24" aria-labelledby="about-heading">
         <div className="grid items-start gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-20">
           <Reveal>
-            <span className="text-[13px] font-semibold uppercase tracking-[0.08em] text-primary">Our story</span>
+            <span className="text-[13px] font-semibold uppercase tracking-[0.08em] text-primary">About us</span>
             <h1 id="about-heading" className="mt-3 text-4xl font-extrabold tracking-[-0.025em] md:text-5xl">
-              Fifteen years of <span className="text-gradient">matchmaking at scale</span>
+              Connecting the right talent <span className="text-gradient">with the right opportunity</span>
             </h1>
             <div className="mt-6 space-y-4 text-[16px] leading-relaxed text-body md:text-[17px]">
               <p>
-                TalentBridge started in {siteConfig.founded} with a simple irritation: recruitment agencies sent
-                resumes, not answers. Fifty CVs in an inbox isn&apos;t a service — it&apos;s homework. So we built the
-                agency we wished existed: specialist recruiters who interview every candidate before a client ever
-                sees them, and tell both sides the truth about the market.
+                {siteConfig.legalName} is a premier recruitment company specializing in sourcing high-caliber
+                professionals for the BFSI and Broking industries. We bridge the gap between exceptional talent and
+                outstanding opportunities.
               </p>
               <p>
-                Today that irritation has become a delivery engine — 12,000+ placements across IT, BFSI, healthcare,
-                manufacturing, retail and logistics, for 500+ companies from Series-A startups to listed banks. The
-                model hasn&apos;t changed: shortlists in 3–5 days, feedback within 24 hours, a replacement guarantee in
-                writing, and never a rupee charged to a candidate.
+                Our deep industry expertise spans Banking, Financial Services, Insurance, Stock Broking, Wealth
+                Management, NBFC and FinTech sectors. We help companies find the right talent to drive growth, while
+                empowering job seekers to build successful, fulfilling careers.
+              </p>
+              <p>
+                Founded with a commitment to quality and trust, Mavira Solutions is your dedicated hiring partner —
+                delivering reliable, efficient and tailored recruitment solutions across India.
               </p>
             </div>
           </Reveal>
           <Reveal className="lg:pt-12">
-            <ol className="relative space-y-6 border-l border-line pl-6">
-              {milestones.map((m) => (
-                <li key={m.year} className="relative">
-                  <span aria-hidden className="absolute -left-[30px] top-1 size-2.5 rounded-full bg-primary ring-4 ring-primary-soft" />
-                  <p className="text-[13px] font-bold uppercase tracking-[0.08em] text-primary">{m.year}</p>
-                  <p className="mt-1 text-[14.5px] leading-relaxed text-body">{m.text}</p>
+            <ul className="space-y-5">
+              {pillars.map((p) => (
+                <li key={p.title} className="rounded-card border border-line bg-surface p-6 shadow-soft">
+                  <span className="grid size-10 place-items-center rounded-lg bg-primary-soft text-primary">
+                    <p.icon className="size-4.5" aria-hidden />
+                  </span>
+                  <h2 className="mt-3 text-[16px] font-bold">{p.title}</h2>
+                  <p className="mt-1.5 text-[13.5px] leading-relaxed text-body">{p.body}</p>
                 </li>
               ))}
-            </ol>
+            </ul>
           </Reveal>
         </div>
       </section>
 
-      {/* Mission & values */}
+      {/* Values */}
       <section className="bg-background-alt py-20 md:py-28" aria-labelledby="values-heading">
         <div className="container-site">
           <SectionHeading
-            eyebrow="Mission & values"
+            eyebrow="Values"
             title="What we optimise for"
             lead="Our mission is simple: make hiring fast and fair for companies, and job-hunting humane for people. Four values keep it honest."
           />
@@ -123,35 +131,10 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      <StatsBand stats={stats} />
-
-      {/* Leadership */}
-      <section className="bg-background-alt py-20 md:py-28" aria-labelledby="leadership-heading">
-        <div className="container-site">
-          <SectionHeading
-            eyebrow="Leadership"
-            title="The people behind the placements"
-            lead="A leadership team that has done the work — every one of them has personally closed roles, run drives and sat across candidates."
-          />
-          <RevealGroup as="ul" className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {leaders.map((leader) => (
-              <RevealItem as="li" key={leader.name}>
-                <div className="h-full rounded-card border border-line bg-surface p-6 text-center shadow-soft">
-                  <Avatar name={leader.name} className="mx-auto size-16 text-lg" />
-                  <h3 className="mt-4 text-[16px] font-bold">{leader.name}</h3>
-                  <p className="mt-0.5 text-[13px] font-semibold text-primary">{leader.role}</p>
-                  <p className="mt-3 text-[13.5px] leading-relaxed text-body">{leader.bio}</p>
-                </div>
-              </RevealItem>
-            ))}
-          </RevealGroup>
-        </div>
-      </section>
-
-      {/* Certifications & awards */}
+      {/* Registration & recognition */}
       <section className="container-site py-16 md:py-20" aria-labelledby="awards-heading">
         <h2 id="awards-heading" className="sr-only">
-          Certifications and awards
+          Company registration and recognition
         </h2>
         <RevealGroup as="ul" className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {achievements.map((a) => (

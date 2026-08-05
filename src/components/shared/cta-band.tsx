@@ -4,10 +4,10 @@ import { Reveal } from "@/components/shared/reveal";
 
 /** Full-width gradient call-to-action band with the dual hire/get-hired path. */
 export function CtaBand({
-  title = "Hiring, or looking?",
-  lead = "Either way, you're one conversation away from done.",
+  title = "Ready to hire the right talent?",
+  lead = "Tell us who you need — we respond within one business day.",
   primary = { label: "Request Talent", href: "/employers#request-talent" },
-  secondary = { label: "Browse open roles", href: "/jobs" },
+  secondary = { label: "Contact us", href: "/contact" },
 }: {
   title?: string;
   lead?: string;

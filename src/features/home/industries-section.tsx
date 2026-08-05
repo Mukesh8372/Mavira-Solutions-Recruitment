@@ -2,7 +2,7 @@ import Link from "next/link";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { RevealGroup, RevealItem } from "@/components/shared/reveal";
 import { Icon } from "@/components/shared/icon";
-import { getIndustries } from "@/features/jobs/queries";
+import { getIndustries } from "@/features/content/queries";
 
 export async function IndustriesSection() {
   const industries = await getIndustries();
@@ -11,7 +11,7 @@ export async function IndustriesSection() {
       <SectionHeading
         eyebrow="Where we work"
         title="Industries we serve"
-        lead="Domain-specialist recruiters for each vertical — because a great BFSI hire and a great warehouse hire are found in completely different ways."
+        lead="We specialize in placing top talent across high-growth financial sectors — deep industry knowledge ensures precise candidate matching for every role."
       />
       <RevealGroup as="ul" className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {industries.map((industry) => (
@@ -27,7 +27,7 @@ export async function IndustriesSection() {
                 <span className="block truncate text-[14px] font-bold text-foreground group-hover:text-primary">
                   {industry.name}
                 </span>
-                <span className="block text-[12px] text-faint">{industry._count.jobs} open roles</span>
+                <span className="block truncate text-[12px] text-faint">{industry.description}</span>
               </span>
             </Link>
           </RevealItem>

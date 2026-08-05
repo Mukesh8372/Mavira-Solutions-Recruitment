@@ -1,4 +1,4 @@
-# TalentBridge — Pre-Implementation Package
+# Mavira Solutions — Pre-Implementation Package
 
 Status: **awaiting approval** before implementation begins.
 
@@ -12,4 +12,4 @@ Status: **awaiting approval** before implementation begins.
 | [06-quality-plan.md](06-quality-plan.md) | SEO, performance, accessibility checklist, testing, deployment, scalability (22–26, 29) |
 | [design-preview.html](design-preview.html) | High-fidelity design direction (published as a live artifact) |
 
-Brand name **TalentBridge** is a working title — configured in one file (`src/config/site.ts`) and trivially replaceable.
+Brand name **Mavira Solutions** is a working title — configured in one file (`src/config/site.ts`) and trivially replaceable.

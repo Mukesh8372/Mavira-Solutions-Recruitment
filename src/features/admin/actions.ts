@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { labelApplicationStatus } from "@/lib/format";
 import { slugify, shortId } from "@/lib/utils";
 
 export type AdminActionResult = { ok: true; message?: string } | { ok: false; error: string };
@@ -26,130 +25,6 @@ async function audit(actorId: string, action: string, entity: string, entityId: 
       diff: diff === undefined ? undefined : JSON.stringify(diff),
     },
   });
-}
-
-/* ------------------------------------------------------------------ Jobs */
-
-const jobStatusSchema = z.enum(["DRAFT", "PUBLISHED", "CLOSED", "ARCHIVED"]);
-
-const jobStatusAction: Record<z.infer<typeof jobStatusSchema>, string> = {
-  DRAFT: "job.unpublish",
-  PUBLISHED: "job.publish",
-  CLOSED: "job.close",
-  ARCHIVED: "job.archive",
-};
-
-export async function setJobStatus(jobId: string, status: string): Promise<AdminActionResult> {
-  const session = await requireStaff();
-  if (!session) return notStaff;
-  const parsed = jobStatusSchema.safeParse(status);
-  if (!parsed.success) return { ok: false, error: "Invalid job status." };
-
-  const job = await prisma.job.findUnique({ where: { id: jobId } });
-  if (!job) return { ok: false, error: "Job not found." };
-  if (job.status === parsed.data) return { ok: true, message: "No change — job already in that state." };
-
-  const publishing = parsed.data === "PUBLISHED";
-  await prisma.job.update({
-    where: { id: jobId },
-    data: {
-      status: parsed.data,
-      ...(publishing && {
-        publishedAt: job.publishedAt ?? new Date(),
-        validThrough: new Date(Date.now() + 45 * 86_400_000),
-      }),
-    },
-  });
-  await audit(session.user.id, jobStatusAction[parsed.data], "Job", jobId, { from: job.status, to: parsed.data });
-
-  revalidatePath("/admin");
-  revalidatePath("/admin/jobs");
-  revalidatePath("/jobs");
-  revalidatePath(`/jobs/${job.slug}`);
-  return { ok: true, message: publishing ? "Job published" : `Job marked ${parsed.data.toLowerCase()}` };
-}
-
-const jobFlagsSchema = z.object({
-  featured: z.boolean().optional(),
-  urgent: z.boolean().optional(),
-});
-
-export async function updateJobFlags(
-  jobId: string,
-  flags: z.infer<typeof jobFlagsSchema>
-): Promise<AdminActionResult> {
-  const session = await requireStaff();
-  if (!session) return notStaff;
-  const parsed = jobFlagsSchema.safeParse(flags);
-  if (!parsed.success) return { ok: false, error: "Invalid flags." };
-
-  const job = await prisma.job.findUnique({ where: { id: jobId } });
-  if (!job) return { ok: false, error: "Job not found." };
-
-  await prisma.job.update({ where: { id: jobId }, data: parsed.data });
-  await audit(session.user.id, "job.flags", "Job", jobId, {
-    from: { featured: job.featured, urgent: job.urgent },
-    to: { featured: parsed.data.featured ?? job.featured, urgent: parsed.data.urgent ?? job.urgent },
-  });
-
-  revalidatePath("/admin/jobs");
-  revalidatePath("/jobs");
-  revalidatePath(`/jobs/${job.slug}`);
-  return { ok: true, message: "Job updated" };
-}
-
-/* ---------------------------------------------------------- Applications */
-
-const applicationStatusSchema = z.enum([
-  "APPLIED",
-  "SCREENING",
-  "SHORTLISTED",
-  "INTERVIEW",
-  "OFFERED",
-  "PLACED",
-  "REJECTED",
-  "WITHDRAWN",
-]);
-
-export async function adminUpdateApplicationStatus(id: string, status: string): Promise<AdminActionResult> {
-  const session = await requireStaff();
-  if (!session) return notStaff;
-  const parsed = applicationStatusSchema.safeParse(status);
-  if (!parsed.success) return { ok: false, error: "Invalid application status." };
-
-  const application = await prisma.application.findUnique({
-    where: { id },
-    include: { job: { include: { company: true } }, candidate: true },
-  });
-  if (!application) return { ok: false, error: "Application not found." };
-  if (application.status === parsed.data) return { ok: true, message: "Status unchanged." };
-
-  const history = JSON.parse((application.statusHistory as string) || "[]") as unknown[];
-  await prisma.application.update({
-    where: { id },
-    data: {
-      status: parsed.data,
-      statusHistory: JSON.stringify([...history, { status: parsed.data, at: new Date().toISOString() }]),
-    },
-  });
-  await prisma.notification.create({
-    data: {
-      userId: application.candidate.userId,
-      type: "APPLICATION_STATUS",
-      title: `Update on your application — ${application.job.title}`,
-      body: `${application.job.company.name}: your application is now "${labelApplicationStatus(parsed.data)}".`,
-      link: "/dashboard/applications",
-    },
-  });
-  await audit(session.user.id, "application.status", "Application", id, {
-    from: application.status,
-    to: parsed.data,
-  });
-
-  revalidatePath("/admin");
-  revalidatePath("/admin/applications");
-  revalidatePath("/dashboard/applications");
-  return { ok: true, message: `Moved to ${labelApplicationStatus(parsed.data)}` };
 }
 
 /* ------------------------------------------------------------------ Leads */

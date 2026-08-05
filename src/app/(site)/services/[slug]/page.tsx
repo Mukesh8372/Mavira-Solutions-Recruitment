@@ -125,7 +125,7 @@ export default async function ServiceDetailPage(props: { params: Promise<{ slug:
         <SectionHeading
           eyebrow="How it runs"
           title="The same four steps, tuned for this engagement"
-          lead="Every TalentBridge service rides the same rails — brief, source, shortlist, close — with SLAs at each stage."
+          lead="Every Mavira Solutions service rides the same rails — brief, source, shortlist, close — with SLAs at each stage."
         />
         <RevealGroup as="ul" className="relative grid gap-8 md:grid-cols-4 md:gap-5">
           <div aria-hidden className="absolute left-0 right-0 top-5 hidden h-px bg-line md:block" />
