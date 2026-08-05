@@ -8,7 +8,6 @@ const PAGE_SIZE = 50;
 export async function getAdminOverview() {
   const [
     newLeads,
-    unhandledQueries,
     publishedPosts,
     draftPosts,
     subscribers,
@@ -17,11 +16,9 @@ export async function getAdminOverview() {
     successStories,
     faqs,
     industries,
-    recentQueries,
     recentLeads,
   ] = await Promise.all([
     prisma.lead.count({ where: { status: "NEW" } }),
-    prisma.contactQuery.count({ where: { handled: false } }),
     prisma.blogPost.count({ where: { status: "PUBLISHED" } }),
     prisma.blogPost.count({ where: { status: "DRAFT" } }),
     prisma.newsletterSubscriber.count({ where: { unsubscribedAt: null } }),
@@ -30,12 +27,10 @@ export async function getAdminOverview() {
     prisma.successStory.count({ where: { status: "PUBLISHED" } }),
     prisma.faqItem.count(),
     prisma.industry.count(),
-    prisma.contactQuery.findMany({ orderBy: { createdAt: "desc" }, take: 6 }),
-    prisma.lead.findMany({ orderBy: { createdAt: "desc" }, take: 4 }),
+    prisma.lead.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
   ]);
   return {
     newLeads,
-    unhandledQueries,
     publishedPosts,
     draftPosts,
     subscribers,
@@ -44,7 +39,6 @@ export async function getAdminOverview() {
     successStories,
     faqs,
     industries,
-    recentQueries,
     recentLeads,
   };
 }
@@ -52,14 +46,6 @@ export async function getAdminOverview() {
 export async function getAdminLeads(status?: LeadStatus) {
   return prisma.lead.findMany({
     where: status ? { status } : undefined,
-    orderBy: { createdAt: "desc" },
-    take: PAGE_SIZE,
-  });
-}
-
-export async function getAdminContactQueries(handled?: boolean) {
-  return prisma.contactQuery.findMany({
-    where: handled === undefined ? undefined : { handled },
     orderBy: { createdAt: "desc" },
     take: PAGE_SIZE,
   });

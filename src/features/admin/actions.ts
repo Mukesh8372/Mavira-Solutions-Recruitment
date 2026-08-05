@@ -49,23 +49,6 @@ export async function updateLeadStatus(id: string, status: string): Promise<Admi
   return { ok: true, message: "Lead updated" };
 }
 
-/* -------------------------------------------------------- Contact queries */
-
-export async function markQueryHandled(id: string, handled: boolean): Promise<AdminActionResult> {
-  const session = await requireStaff();
-  if (!session) return notStaff;
-
-  const query = await prisma.contactQuery.findUnique({ where: { id } });
-  if (!query) return { ok: false, error: "Query not found." };
-
-  await prisma.contactQuery.update({ where: { id }, data: { handled: Boolean(handled) } });
-  await audit(session.user.id, handled ? "query.handled" : "query.reopened", "ContactQuery", id);
-
-  revalidatePath("/admin");
-  revalidatePath("/admin/queries");
-  return { ok: true, message: handled ? "Marked handled" : "Reopened" };
-}
-
 /* ----------------------------------------------------------- Testimonials */
 
 export async function setTestimonialApproval(id: string, approved: boolean): Promise<AdminActionResult> {

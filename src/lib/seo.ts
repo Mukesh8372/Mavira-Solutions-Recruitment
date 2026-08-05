@@ -39,7 +39,6 @@ export function organizationJsonLd(contact?: OrgContact) {
       postalCode: contact?.postalCode ?? siteConfig.address.postalCode,
       addressCountry: siteConfig.address.country,
     },
-    sameAs: Object.values(contact?.social ?? siteConfig.social),
   };
 }
 

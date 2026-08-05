@@ -9,11 +9,12 @@ import { getContactContent } from "@/features/site-content/queries";
 
 export async function SiteFooter() {
   const contact = await getContactContent();
+  // Social profiles aren't live yet — icons render as placeholders, not links.
   const socials = [
-    { label: "LinkedIn", href: contact.social.linkedin, icon: "linkedin" as const },
-    { label: "Twitter / X", href: contact.social.twitter, icon: "x" as const },
-    { label: "Instagram", href: contact.social.instagram, icon: "instagram" as const },
-    { label: "Facebook", href: contact.social.facebook, icon: "facebook" as const },
+    { label: "LinkedIn", icon: "linkedin" as const },
+    { label: "Twitter / X", icon: "x" as const },
+    { label: "Instagram", icon: "instagram" as const },
+    { label: "Facebook", icon: "facebook" as const },
   ];
   return (
     <footer className="border-t border-line bg-background-alt">
@@ -95,17 +96,14 @@ export async function SiteFooter() {
             </Link>
           </p>
           <ul className="flex items-center gap-2">
-            {socials.map(({ label, href, icon }) => (
+            {socials.map(({ label, icon }) => (
               <li key={label}>
-                <a
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={label}
-                  className="grid size-9 place-items-center rounded-lg border border-line text-body transition-colors hover:border-primary hover:text-primary"
+                <span
+                  title={`${label} — coming soon`}
+                  className="grid size-9 place-items-center rounded-lg border border-line text-faint"
                 >
                   <BrandIcon name={icon} className="size-4" />
-                </a>
+                </span>
               </li>
             ))}
           </ul>

@@ -5,7 +5,6 @@ export type DashboardNavItem = { label: string; href: string; icon: string };
 export const adminNav: DashboardNavItem[] = [
   { label: "Overview", href: "/admin", icon: "layout-dashboard" },
   { label: "Leads", href: "/admin/leads", icon: "target" },
-  { label: "Contact queries", href: "/admin/queries", icon: "mail" },
   { label: "Site content", href: "/admin/site-content", icon: "globe" },
   { label: "Blog", href: "/admin/blog", icon: "newspaper" },
   { label: "Success stories", href: "/admin/success-stories", icon: "award" },

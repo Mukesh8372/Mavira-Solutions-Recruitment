@@ -12,7 +12,7 @@ export const siteConfig = {
   phone: "+91 79770 25412",
   phoneHref: "tel:+917977025412",
   whatsappHref: "https://wa.me/917977025412",
-  email: "mukesh@mavirasolutions.com",
+  email: "info@mavirasolutions.com",
   address: {
     street: "Office No. 506, Sai Baba Vihar Complex, Near Muchulla College, Ghodbunder Road",
     city: "Thane (West)",

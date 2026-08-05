@@ -3,7 +3,6 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, clientKey } from "@/lib/rate-limit";
-import { sendNotification } from "@/lib/mail";
 
 const HIRING_TYPES = [
   "Permanent Recruitment",
@@ -51,20 +50,6 @@ export async function createLead(input: LeadInput): Promise<LeadResult> {
       rolesNeeded: parsed.data.rolesNeeded || null,
       message: parsed.data.message || null,
     },
-  });
-
-  await sendNotification({
-    subject: `New lead: ${parsed.data.companyName} — ${parsed.data.hiringType}`,
-    replyTo: parsed.data.email,
-    rows: [
-      ["Company", parsed.data.companyName],
-      ["Contact", parsed.data.name],
-      ["Email", parsed.data.email],
-      ["Phone", parsed.data.phone],
-      ["Hiring for", parsed.data.hiringType],
-      ["Roles needed", parsed.data.rolesNeeded || "—"],
-      ["Message", parsed.data.message || "—"],
-    ],
   });
 
   return { ok: true };
