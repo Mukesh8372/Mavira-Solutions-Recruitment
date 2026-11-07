@@ -1,67 +1,69 @@
-# Mavira Solutions — Recruitment & Placement Platform
+# Mavira Solutions — company website
 
-A premium recruitment-agency website with a jobs engine, three role-based dashboards and an admin-as-CMS — built with Next.js 16, TypeScript (strict), Tailwind CSS v4, Prisma and NextAuth v5.
+The public website and admin CMS for Mavira Solutions Private Limited, a BFSI, broking and FinTech recruitment agency in Thane, Maharashtra.
 
-> Full product strategy, design system and architecture docs live in [`docs/`](docs/README.md).
+Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4, Prisma 6 (PostgreSQL) and NextAuth v5.
+
+- **System overview, routes, data model and known issues:** [CONTEXT.md](CONTEXT.md)
+- **Rules for changing the code:** [AGENTS.md](AGENTS.md)
 
 ## Quick start
 
+1. Install packages. This also runs `prisma generate`.
+
+   ```bash
+   npm install
+   ```
+
+2. Copy `.env.example` to `.env` and fill in the values. `DATABASE_URL` must be a PostgreSQL connection string.
+
+3. Start the dev server on http://localhost:3000.
+
+   ```bash
+   npm run dev
+   ```
+
+Sign in at `/login` with an ADMIN or STAFF account. There is no public sign-up.
+
+### New, empty database only
+
+The seed **deletes all data** before it inserts sample content. Run it only on a new database.
+
 ```bash
-npm install
-npx prisma migrate dev   # creates SQLite dev.db
-npx prisma db seed       # 33 jobs, 12 companies, blog, testimonials, demo users
-npm run dev              # http://localhost:3000
+npx prisma db seed
 ```
 
-### Demo logins (password: `Password@123`)
+It creates one admin from `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env`. If `ADMIN_PASSWORD` is empty, the password is `Password@123`. Change it at Admin → Settings.
 
-| Role | Email | Lands on |
-|---|---|---|
-| Candidate | `candidate@mavira.dev` | `/dashboard` |
-| Employer | `employer@mavira.dev` | `/employer` |
-| Admin | `admin@mavira.dev` | `/admin` |
+The migration folder does not work with Postgres yet. See CONTEXT.md §10, issue 1.
 
-## What's inside
+## What is inside
 
-- **Public site** — Home, About, 7 service pages, industries, employer & candidate hubs, process, why-us, success stories, testimonials, FAQ, contact, blog, legal pages, designed 404.
-- **Jobs engine** — search + filters (department, experience, salary, type, mode) in URL params, sorting, pagination, job detail with JobPosting JSON-LD (Google Jobs-ready), guest apply flow with resume upload (creates a trackable shadow account), saved jobs, share.
-- **Candidate dashboard** — applications with live status, saved jobs, interviews with meeting links, resume manager, profile completion meter, notifications, settings.
-- **Employer dashboard** — post/manage jobs (admin-reviewed), application pipeline with status transitions + candidate notifications, interview scheduling, company profile, funnel reports, invoiced-ready schema.
-- **Admin dashboard (the CMS)** — moderate jobs (publish/feature), all applications, candidates, employers, leads pipeline, contact queries, blog authoring (markdown), testimonial approval, newsletter list, users & roles, audit log.
-- **SEO** — Metadata API everywhere, canonical URLs, Organization/WebSite/BreadcrumbList/JobPosting/FAQPage/Article JSON-LD, `sitemap.xml`, `robots.txt`.
-- **Security** — zod validation on every boundary, bcrypt(12), role checks in proxy + layouts + every server action, rate-limited public forms with honeypots, authorized-only resume file serving, security headers, audit logging.
-- **A11y & performance** — WCAG-minded components (labels, focus rings, aria, reduced-motion), RSC-first with client islands, self-hosted variable font, zero-image hero.
-
-## Environment
-
-`.env` (see `.env.example`):
-
-```
-DATABASE_URL="file:./dev.db"
-AUTH_SECRET="generate-a-long-random-string"
-AUTH_TRUST_HOST=true
-NEXT_PUBLIC_SITE_URL="http://localhost:3000"
-```
-
-## Production notes
-
-- **Database**: switch `prisma/schema.prisma` provider to `postgresql`; convert the Json string-array columns to native `String[]` (documented in `docs/05-technical-architecture.md`).
-- **Uploads**: `src/lib/uploads.ts` is a local-disk adapter; swap for S3/UploadThing behind the same function signature. Resumes are served only through the authorized route `/api/v1/files/[name]`.
-- **Email**: password reset + notification email senders are stubbed (`src/features/auth/actions.ts`); wire Resend/SMTP.
-- **Rate limiting**: in-memory (single instance); swap for Upstash Ratelimit when scaling out.
-- Deployment pipeline, testing strategy and scalability roadmap: `docs/06-quality-plan.md`.
+- **Public site:** home, about, 5 service pages, industries, employers (with the Request Talent form), process, why choose us, success stories, testimonials, FAQ, contact, blog, privacy, terms, 404.
+- **Admin CMS (`/admin`):** leads, site content blocks, blog, success stories, FAQs, industries, testimonial approval, newsletter list, user roles, password change, audit log.
+- **SEO:** Metadata API, canonical URLs, JSON-LD (Organization, WebSite, BreadcrumbList, FAQPage, Article), `sitemap.xml`, `robots.txt`.
+- **Security:** zod on every action, bcrypt cost 12, role checks in the proxy, layouts and actions, honeypots and rate limits on public forms, security headers.
 
 ## Scripts
 
-| Command | Does |
+| Command | What it does |
 |---|---|
-| `npm run dev` | Dev server (Turbopack) |
-| `npm run build` / `start` | Production build / serve |
-| `npm run lint` | ESLint |
+| `npm run dev` | Dev server |
+| `npm run build` | Production build (reads the database) |
+| `npm run start` | Serve the production build |
 | `npx tsc --noEmit` | Typecheck |
+| `npx eslint src --max-warnings 0` | Lint |
 | `npx prisma studio` | Browse the database |
-| `npx prisma db seed` | Re-seed demo data |
 
-## Rebranding
+## Environment
 
-All brand facts (name, phone, address, socials, SLA copy) live in `src/config/site.ts`. Colors/typography are CSS variables in `src/app/globals.css`.
+See `.env.example` and CONTEXT.md §11.
+
+```
+DATABASE_URL="postgresql://..."
+AUTH_SECRET="a-long-random-string"
+AUTH_TRUST_HOST=true
+NEXT_PUBLIC_SITE_URL="http://localhost:3000"
+ADMIN_EMAIL="..."      # seed only
+ADMIN_PASSWORD="..."   # seed only
+```

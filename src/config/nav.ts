@@ -28,7 +28,13 @@ export const mainNav: NavGroup[] = [
   { label: "Contact", href: "/contact" },
 ];
 
-export const footerNav: { heading: string; links: NavLink[] }[] = [
+/**
+ * `source: "industries"` marks a column whose links SiteFooter fills from the
+ * Industry table (before the static links), so admin edits show up in the footer.
+ */
+export type FooterColumn = { heading: string; links: NavLink[]; source?: "industries" };
+
+export const footerNav: FooterColumn[] = [
   {
     heading: "Company",
     links: [
@@ -49,13 +55,8 @@ export const footerNav: { heading: string; links: NavLink[] }[] = [
   },
   {
     heading: "Industries",
-    links: [
-      { label: "Banking & Financial Services", href: "/industries/banking-financial-services" },
-      { label: "Insurance & Wealth Management", href: "/industries/insurance-wealth-management" },
-      { label: "Stock Broking & Equity", href: "/industries/stock-broking-equity" },
-      { label: "NBFC & FinTech", href: "/industries/nbfc-fintech" },
-      { label: "All Industries", href: "/industries" },
-    ],
+    source: "industries",
+    links: [{ label: "All Industries", href: "/industries" }],
   },
   {
     heading: "Resources",

@@ -42,17 +42,13 @@ export function organizationJsonLd(contact?: OrgContact) {
   };
 }
 
+/** No SearchAction: the site has no search page. Add one only with a real search route. */
 export function websiteJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: siteConfig.name,
     url: siteConfig.url,
-    potentialAction: {
-      "@type": "SearchAction",
-      target: { "@type": "EntryPoint", urlTemplate: `${siteConfig.url}/jobs?q={search_term_string}` },
-      "query-input": "required name=search_term_string",
-    },
   };
 }
 

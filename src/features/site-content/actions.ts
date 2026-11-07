@@ -152,11 +152,13 @@ export async function deleteFaq(id: string): Promise<ContentActionResult> {
 
 /* ---------------- Industry CRUD ---------------- */
 
-const industryPaths = ["/", "/industries"];
-
+/**
+ * The footer lists industries on every public page, so revalidate the whole
+ * layout tree. The sitemap is a route handler, so it is named on its own.
+ */
 function revalidateIndustryPages() {
-  for (const path of industryPaths) revalidatePath(path);
-  revalidatePath("/industries/[slug]", "page");
+  revalidatePath("/", "layout");
+  revalidatePath("/sitemap.xml");
 }
 
 export async function saveIndustry(input: unknown, id?: string): Promise<ContentActionResult> {
@@ -188,6 +190,7 @@ export async function saveIndustry(input: unknown, id?: string): Promise<Content
 function revalidateStoryPages() {
   revalidatePath("/success-stories");
   revalidatePath("/success-stories/[slug]", "page");
+  revalidatePath("/sitemap.xml");
 }
 
 export async function saveSuccessStory(input: unknown, id?: string): Promise<ContentActionResult> {

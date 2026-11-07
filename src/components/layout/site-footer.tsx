@@ -6,9 +6,15 @@ import { NewsletterForm } from "@/features/newsletter/newsletter-form";
 import { footerNav } from "@/config/nav";
 import { siteConfig } from "@/config/site";
 import { getContactContent } from "@/features/site-content/queries";
+import { getIndustries } from "@/features/content/queries";
 
 export async function SiteFooter() {
-  const contact = await getContactContent();
+  const [contact, industries] = await Promise.all([getContactContent(), getIndustries()]);
+  const columns = footerNav.map((col) =>
+    col.source === "industries"
+      ? { ...col, links: [...industries.map((i) => ({ label: i.name, href: `/industries/${i.slug}` })), ...col.links] }
+      : col
+  );
   // Social profiles aren't live yet — icons render as placeholders, not links.
   const socials = [
     { label: "LinkedIn", icon: "linkedin" as const },
@@ -57,7 +63,7 @@ export async function SiteFooter() {
             </ul>
           </div>
 
-          {footerNav.map((col) => (
+          {columns.map((col) => (
             <nav key={col.heading} aria-label={col.heading}>
               <h3 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-faint">{col.heading}</h3>
               <ul className="mt-4 space-y-2.5">

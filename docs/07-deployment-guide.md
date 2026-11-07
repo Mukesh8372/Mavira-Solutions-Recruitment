@@ -1,5 +1,13 @@
 # Mavira Solutions — Step-by-Step Deployment Guide
 
+> **Warning: parts of this guide are out of date (checked 2026-11-07).** It was written for the old job portal.
+>
+> - **Do not do Step 0.** The `production-readiness` branch belongs to the job portal and predates the rebrand.
+> - `schema.prisma` already uses `postgresql`. The migration folder is still SQLite, so `prisma migrate deploy` fails (P3019). Fix the migration baseline before you use `prisma migrate deploy` in the build command. See `CONTEXT.md` §10, issue 1.
+> - The seed no longer creates jobs or demo candidate and employer users. It still deletes all data.
+> - `CRON_SECRET`, `LEADS_INBOX`, `RESEND_API_KEY`, `EMAIL_FROM`, `BLOB_READ_WRITE_TOKEN`, Upstash, `/api/health`, `vercel.json` and the job-alert cron do not exist in `main`.
+> - Steps 1, 3 (without the extra variables), 7 and 10 still apply.
+
 **Goal:** take the project from this repository to a live website on your own GoDaddy domain, on free tiers, with database, emails, file uploads, rate limiting and cron jobs working.
 
 **Final architecture:**

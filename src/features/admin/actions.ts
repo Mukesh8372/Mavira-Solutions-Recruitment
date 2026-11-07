@@ -27,6 +27,27 @@ async function audit(actorId: string, action: string, entity: string, entityId: 
   });
 }
 
+/**
+ * revalidatePath refreshes only the named path, so list every public page
+ * that reads the table. Keep these in sync with the route table in CONTEXT.md.
+ */
+function revalidateTestimonialPages() {
+  revalidatePath("/admin/testimonials");
+  revalidatePath("/"); // featured testimonials
+  revalidatePath("/testimonials");
+  revalidatePath("/employers");
+  revalidatePath("/why-choose-us");
+}
+
+function revalidateBlogPages() {
+  revalidatePath("/admin/blog");
+  revalidatePath("/"); // "Latest from the placement desk"
+  revalidatePath("/blog");
+  revalidatePath("/blog/category/[slug]", "page");
+  revalidatePath("/blog/[slug]", "page"); // also clears the old URL after a slug change
+  revalidatePath("/sitemap.xml");
+}
+
 /* ------------------------------------------------------------------ Leads */
 
 const leadStatusSchema = z.enum(["NEW", "CONTACTED", "QUALIFIED", "CONVERTED", "LOST"]);
@@ -61,8 +82,7 @@ export async function setTestimonialApproval(id: string, approved: boolean): Pro
   await prisma.testimonial.update({ where: { id }, data: { approved: Boolean(approved) } });
   await audit(session.user.id, approved ? "testimonial.approve" : "testimonial.unapprove", "Testimonial", id);
 
-  revalidatePath("/admin/testimonials");
-  revalidatePath("/");
+  revalidateTestimonialPages();
   return { ok: true, message: approved ? "Testimonial approved" : "Approval removed" };
 }
 
@@ -79,8 +99,7 @@ export async function setTestimonialFeatured(id: string, featured: boolean): Pro
     to: Boolean(featured),
   });
 
-  revalidatePath("/admin/testimonials");
-  revalidatePath("/");
+  revalidateTestimonialPages();
   return { ok: true, message: featured ? "Marked featured" : "Removed from featured" };
 }
 
@@ -94,8 +113,7 @@ export async function deleteTestimonial(id: string): Promise<AdminActionResult> 
   await prisma.testimonial.delete({ where: { id } });
   await audit(session.user.id, "testimonial.delete", "Testimonial", id, { authorName: testimonial.authorName });
 
-  revalidatePath("/admin/testimonials");
-  revalidatePath("/");
+  revalidateTestimonialPages();
   return { ok: true, message: "Testimonial deleted" };
 }
 
@@ -176,9 +194,7 @@ export async function saveBlogPost(input: BlogPostInput): Promise<AdminActionRes
     await audit(session.user.id, "blog.create", "BlogPost", postId, { slug, status: data.status });
   }
 
-  revalidatePath("/admin/blog");
-  revalidatePath("/blog");
-  revalidatePath(`/blog/${slug}`);
+  revalidateBlogPages();
   return { ok: true, message: existing ? "Post saved" : "Post created" };
 }
 
@@ -192,9 +208,7 @@ export async function deleteBlogPost(id: string): Promise<AdminActionResult> {
   await prisma.blogPost.delete({ where: { id } });
   await audit(session.user.id, "blog.delete", "BlogPost", id, { slug: post.slug, title: post.title });
 
-  revalidatePath("/admin/blog");
-  revalidatePath("/blog");
-  revalidatePath(`/blog/${post.slug}`);
+  revalidateBlogPages();
   return { ok: true, message: "Post deleted" };
 }
 
