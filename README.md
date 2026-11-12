@@ -35,7 +35,7 @@ npx prisma db seed
 
 It creates one admin from `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env`. If `ADMIN_PASSWORD` is empty, the password is `Password@123`. Change it at Admin → Settings.
 
-The migration folder does not work with Postgres yet. See CONTEXT.md §10, issue 1.
+Migrations are Postgres migrations with a baseline at `prisma/migrations/0_init`. Apply new ones with `npx prisma migrate deploy`. See CONTEXT.md §7.
 
 ## What is inside
 

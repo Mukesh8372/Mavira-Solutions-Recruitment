@@ -3,7 +3,7 @@
 > **Warning: parts of this guide are out of date (checked 2026-11-07).** It was written for the old job portal.
 >
 > - **Do not do Step 0.** The `production-readiness` branch belongs to the job portal and predates the rebrand.
-> - `schema.prisma` already uses `postgresql`. The migration folder is still SQLite, so `prisma migrate deploy` fails (P3019). Fix the migration baseline before you use `prisma migrate deploy` in the build command. See `CONTEXT.md` §10, issue 1.
+> - `schema.prisma` uses `postgresql`. The migration history was baselined on 2026-11-12, so `prisma migrate deploy` works. Do not run the "Regenerate migrations" step below; it would delete the baseline.
 > - The seed no longer creates jobs or demo candidate and employer users. It still deletes all data.
 > - `CRON_SECRET`, `LEADS_INBOX`, `RESEND_API_KEY`, `EMAIL_FROM`, `BLOB_READ_WRITE_TOKEN`, Upstash, `/api/health`, `vercel.json` and the job-alert cron do not exist in `main`.
 > - Steps 1, 3 (without the extra variables), 7 and 10 still apply.

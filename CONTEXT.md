@@ -106,7 +106,7 @@ src/
     motion.ts              framer-motion variants.
 prisma/
   schema.prisma            PostgreSQL datasource.
-  migrations/              SQLite-dialect migration. Broken for Postgres (see §10, issue 1).
+  migrations/              Postgres migrations. `0_init` is the baseline of the schema as it was on 2026-11-12.
   seed.ts                  Wipes and refills the database.
   dev.db                   Old SQLite file. Git-ignored. Not used.
 docs/                      Planning documents from before the rebrand. Mostly out of date (see docs/README.md).
@@ -216,8 +216,8 @@ Columns typed `Json` (for example `BlogPost.tags`, `SuccessStory.results`, `Sett
 ## 7. Database
 
 - Provider: PostgreSQL (`prisma/schema.prisma`). The local `.env` points at a Neon database (region ap-southeast-1).
-- On 2026-11-07 the live Neon schema matched `schema.prisma` exactly (`prisma migrate diff` returned an empty migration).
-- The migration history does not work. See §10, issue 1.
+- On 2026-11-12 the migration history was baselined. `prisma/migrations/0_init` holds the full schema and is marked as applied on Neon. `npx prisma migrate status` reports "Database schema is up to date".
+- Schema change workflow: edit `schema.prisma`, run `npx prisma migrate diff --from-schema-datasource prisma/schema.prisma --to-schema-datamodel prisma/schema.prisma --script` into a new `prisma/migrations/<timestamp>_<name>/migration.sql`, review the SQL, then run `npx prisma migrate deploy` (this writes to the database in `DATABASE_URL`) and `npx prisma generate`.
 
 ### Tables in use
 
@@ -272,11 +272,10 @@ These items are unused by the current site. Remove them only as a deliberate cha
 
 ## 10. Known issues (verified 2026-11-07)
 
-1. **Migrations are broken for Postgres.** `prisma/migrations/` holds one SQLite-dialect migration and `migration_lock.toml` says `sqlite`. `npx prisma migrate status` fails with error P3019. `prisma migrate deploy` will also fail. To fix: baseline a new Postgres migration from the current schema and mark it applied on Neon (`prisma migrate resolve --applied`). Do this before any schema change.
-2. **Forgot password does nothing.** `requestPasswordReset` returns success but sends no email and stores no token. The only way to reset a password is the change-password form while signed in, or a direct database update.
-3. **Testimonials cannot be created or edited in the admin.** The seed text says "replace from the admin panel", but there is no screen for it.
-4. **No deployment configuration in the repo.** There is no `vercel.json` and no `.vercel/` folder. `docs/07-deployment-guide.md` refers to the old portal and to the `production-readiness` branch. The current deployment state is not recorded in the repo.
-5. **Prisma warns** that `package.json#prisma` (the seed command) is deprecated and will be removed in Prisma 7.
+1. **Forgot password does nothing.** `requestPasswordReset` returns success but sends no email and stores no token. The only way to reset a password is the change-password form while signed in, or a direct database update.
+2. **Testimonials cannot be created or edited in the admin.** The seed text says "replace from the admin panel", but there is no screen for it.
+3. **No deployment configuration in the repo.** There is no `vercel.json` and no `.vercel/` folder. `docs/07-deployment-guide.md` refers to the old portal and to the `production-readiness` branch. The current deployment state is not recorded in the repo.
+4. **Prisma warns** that `package.json#prisma` (the seed command) is deprecated and will be removed in Prisma 7.
 
 ## 11. Environment variables
 

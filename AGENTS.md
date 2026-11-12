@@ -14,7 +14,7 @@ This file holds the rules for changing the code.
 - This is a brochure site with an admin CMS. It is not a job portal. Do not add job, candidate or employer features unless the user asks.
 - `.env` points at a live Neon Postgres database. Treat it as production unless the user says otherwise.
 - **Never run `npx prisma db seed` without asking.** The seed deletes every row in every table.
-- Never run `prisma migrate dev`, `prisma migrate reset`, `prisma db push` or SQL that writes, unless the user asks. The migration history is broken (CONTEXT.md §10, issue 1).
+- Never run `prisma migrate dev`, `prisma migrate reset`, `prisma db push` or SQL that writes. For a schema change, follow the workflow in CONTEXT.md §7: generate the migration with `prisma migrate diff`, review it, then ask before `prisma migrate deploy`.
 - Do not merge the `production-readiness` branch. It belongs to the old job portal.
 
 ## Next.js 16 rules
