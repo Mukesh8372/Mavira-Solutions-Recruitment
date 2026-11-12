@@ -11,7 +11,7 @@ This file holds the rules for changing the code.
 
 ## Before you change anything
 
-- This is a brochure site with an admin CMS. It is not a job portal. Do not add job, candidate or employer features unless the user asks.
+- This is a brochure site with a job board and an admin CMS. Applicants have no accounts. Do not add candidate or employer accounts, dashboards or sign-up unless the user asks.
 - `.env` points at a live Neon Postgres database. Treat it as production unless the user says otherwise.
 - **Never run `npx prisma db seed` without asking.** The seed deletes every row in every table.
 - Never run `prisma migrate dev`, `prisma migrate reset`, `prisma db push` or SQL that writes. For a schema change, follow the workflow in CONTEXT.md §7: generate the migration with `prisma migrate diff`, review it, then ask before `prisma migrate deploy`.

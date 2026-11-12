@@ -13,6 +13,7 @@ export const mainNav: NavGroup[] = [
   { label: "About", href: "/about" },
   { label: "Services", links: services, featured: { label: "Request Talent", href: "/employers#request-talent", description: "Tell us who you need — we respond within 1 business day" } },
   { label: "Industries", href: "/industries" },
+  { label: "Jobs", href: "/jobs" },
   {
     label: "Company",
     links: [
@@ -61,6 +62,7 @@ export const footerNav: FooterColumn[] = [
   {
     heading: "Resources",
     links: [
+      { label: "Current Openings", href: "/jobs" },
       { label: "Blog", href: "/blog" },
       { label: "FAQ", href: "/faq" },
       { label: "Privacy Policy", href: "/privacy-policy" },

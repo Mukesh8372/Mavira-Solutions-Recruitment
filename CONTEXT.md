@@ -7,9 +7,10 @@ Update this file in the same commit as any change that makes a fact here wrong.
 
 The application is the public website of **Mavira Solutions Private Limited**, a recruitment agency in Thane, Maharashtra. The agency recruits for BFSI (banking, financial services, insurance), stock broking, wealth management, NBFC and FinTech companies.
 
-The site is a **brochure site with an admin CMS**. It is not a job portal.
+The site is a **brochure site with a job board and an admin CMS**.
 
-- Public visitors read pages, send a "Request Talent" lead, and subscribe to the newsletter.
+- Public visitors read pages, send a "Request Talent" lead, subscribe to the newsletter, browse open jobs at `/jobs` and apply with a resume.
+- Applicants have no accounts. One application per job per email; the admin reviews them under `/admin/applications` (Step 5 of the job-board work, in progress).
 - Admin and staff users sign in at `/login` and edit content at `/admin`.
 - There is no public sign-up. There are no candidate or employer accounts in use.
 
@@ -84,7 +85,10 @@ src/
     home/                  Homepage sections.
     leads/                 Public "Request Talent" form and action.
     newsletter/            Public newsletter form and action.
-    jobs/                  Job board (in progress): options.ts (fixed lists), schemas.ts (apply form validation).
+    jobs/                  Job board. queries.ts (open-job reads), display.ts (filters, URLs, isJobOpen, clientLabel),
+                           options.ts (fixed lists), schemas.ts (apply validation), actions.ts (applyToJob),
+                           cache.ts (revalidateJobPages), job-card, job-filters, job-search-form, apply-form,
+                           latest-jobs-section (home), industry-jobs-section (industry pages).
     site-content/          Admin-editable content blocks stored in the Setting table, plus FAQ,
                            industry and success-story CRUD.
   components/
@@ -130,12 +134,15 @@ Import alias: `@/*` maps to `src/*`.
 
 | Path | Data source | Render |
 |---|---|---|
-| `/` | Setting (hero, achievements, process, why-us), Testimonial (approved + featured), FaqItem, BlogPost, Industry | Static |
+| `/` | Setting (hero, achievements, process, why-us), Testimonial (approved + featured), FaqItem, BlogPost, Industry, Job (6 newest open) | Static |
 | Footer on every public page | Setting (contact), Industry | — |
 | `/about` | Setting (achievements) | Static |
 | `/services`, `/services/[slug]` | `src/content/services.ts`, Setting (process) | Static / SSG (5 slugs) |
 | `/industries` | Industry | Static |
-| `/industries/[slug]` | Industry | Dynamic |
+| `/industries/[slug]` | Industry, Job (open jobs in the industry) | Dynamic |
+| `/jobs` | Job (open), Department, Industry. Filters in the query string: `q`, `location`, `category`, `industry`, `experience`, `type`, `mode`, `sort`, `page` (10 a page). | Dynamic |
+| `/jobs/[slug]` | Job, Company, Department, Industry. DRAFT/ARCHIVED → 404. CLOSED or past `validThrough` → banner, no form, no JobPosting JSON-LD, `noindex`. Confidential jobs hide the client. Holds the apply form. | Dynamic |
+| `/jobs/category/[slug]` | Department, Job (open) | SSG (one per Department) |
 | `/employers` | Testimonial, FaqItem, Setting (process, contact). Holds the Request Talent form at `#request-talent`. | Static |
 | `/process` | Setting (process) | Static |
 | `/why-choose-us` | Setting (why-us), Testimonial | Static |
@@ -148,7 +155,7 @@ Import alias: `@/*` maps to `src/*`.
 | `/faq` | FaqItem, Setting (contact) | Static |
 | `/contact` | Setting (contact). No form. Phone, WhatsApp, email, map link. | Static |
 | `/privacy-policy`, `/terms` | Text in code | Static |
-| `/sitemap.xml` | Static list + BlogPost, Industry, SuccessStory | Static |
+| `/sitemap.xml` | Static list + BlogPost, Industry, SuccessStory, Department, Job (open) | Static |
 
 "Static" means Next.js prerenders the page at build time **with data from the database**. The page changes only when a server action calls `revalidatePath` for that exact path, or on the next deploy. See §6.
 
@@ -214,6 +221,8 @@ Each table has one helper that lists its pages:
 | Industry | `revalidateIndustryPages()` in `features/site-content/actions.ts` | Whole layout tree (the footer lists industries) and `/sitemap.xml` |
 | FaqItem, Setting blocks | `revalidateContentPages()` in `features/site-content/actions.ts` | `/`, `/employers`, `/process`, `/why-choose-us`, `/about`, `/faq`, `/services/*` |
 | Setting: contact, announcement | inline | Whole layout tree |
+| Job | `revalidateJobPages()` in `features/jobs/cache.ts` | `/`, `/jobs`, `/jobs/*`, `/jobs/category/*`, `/industries/*`, `/sitemap.xml`, `/admin`, `/admin/jobs`, `/admin/applications` |
+| JobApplication | inline in `applyToJob` | `/admin`, `/admin/applications`, `/admin/jobs` |
 
 `/sitemap.xml` is a cached route handler. Name it on its own: `revalidatePath("/sitemap.xml")`.
 
@@ -326,4 +335,6 @@ These items are unused by the current site. Remove them only as a deliberate cha
 | Colors, radii, shadows, fonts | `src/app/globals.css` (`:root`, `.dark`, `@theme inline`) |
 | Legal text | `src/app/(site)/privacy-policy/page.tsx`, `src/app/(site)/terms/page.tsx` |
 | Admin sidebar | `src/config/dashboard-nav.ts` |
+| Apply form fields and rules | `src/features/jobs/schemas.ts` (rules), `src/features/jobs/options.ts` (city, qualification and notice-period lists, age limits), `src/features/jobs/apply-form.tsx` (layout) |
+| Resume size and types | `src/lib/resumes.ts`; the body limit in `next.config.ts` must stay above it |
 | Social icons | Shown as "coming soon" placeholders in `site-footer.tsx` and `contact/page.tsx`. The `social` URLs in the contact setting are stored but not rendered as links. |

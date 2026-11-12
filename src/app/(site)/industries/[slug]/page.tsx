@@ -11,6 +11,7 @@ import { JsonLd } from "@/components/shared/json-ld";
 import { breadcrumbJsonLd } from "@/lib/seo";
 import { getIndustryBySlug } from "@/features/content/queries";
 import { servicesContent } from "@/content/services";
+import { IndustryJobsSection } from "@/features/jobs/industry-jobs-section";
 
 /** Key positions we place per sector — from the Mavira Solutions company profile. */
 const keyRoles: Record<string, string[]> = {
@@ -103,6 +104,8 @@ export default async function IndustryDetailPage(props: { params: Promise<{ slug
           </RevealGroup>
         </div>
       </section>
+
+      <IndustryJobsSection industrySlug={industry.slug} industryName={industry.name} />
 
       {/* Related services */}
       <section className="container-site py-20 md:py-24" aria-label="Recommended services for this industry">
