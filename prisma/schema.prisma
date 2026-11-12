@@ -146,46 +146,105 @@ model Industry {
 }
 
 model Job {
-  id               String         @id @default(cuid())
-  slug             String         @unique
-  title            String
-  description      String
-  responsibilities Json           @default("[]") // string[]
-  requirements     Json           @default("[]") // string[]
-  benefits         Json           @default("[]") // string[]
-  skills           Json           @default("[]") // string[]
-  departmentId     String
-  department       Department     @relation(fields: [departmentId], references: [id])
-  industryId       String?
-  industry         Industry?      @relation(fields: [industryId], references: [id])
-  location         String
-  workMode         WorkMode       @default(ONSITE)
-  employmentType   EmploymentType @default(FULL_TIME)
-  experienceMin    Int            @default(0)
-  experienceMax    Int            @default(0)
-  salaryMin        Int?
-  salaryMax        Int?
-  salaryVisible    Boolean        @default(true)
-  status           JobStatus      @default(DRAFT)
-  featured         Boolean        @default(false)
-  urgent           Boolean        @default(false)
-  validThrough     DateTime?
-  viewCount        Int            @default(0)
-  seoTitle         String?
-  seoDescription   String?
-  publishedAt      DateTime?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  companyId        String
-  company          Company        @relation(fields: [companyId], references: [id])
-  postedById       String?
-  postedBy         User?          @relation("PostedJobs", fields: [postedById], references: [id])
-  applications     Application[]
-  savedBy          SavedJob[]
+  id                 String           @id @default(cuid())
+  slug               String           @unique
+  title              String
+  description        String
+  responsibilities   Json             @default("[]") // string[]
+  requirements       Json             @default("[]") // string[]
+  benefits           Json             @default("[]") // string[]
+  skills             Json             @default("[]") // string[]
+  departmentId       String
+  department         Department       @relation(fields: [departmentId], references: [id])
+  industryId         String?
+  industry           Industry?        @relation(fields: [industryId], references: [id])
+  location           String
+  workMode           WorkMode         @default(ONSITE)
+  employmentType     EmploymentType   @default(FULL_TIME)
+  experienceMin      Int              @default(0)
+  experienceMax      Int              @default(0)
+  salaryMin          Int?
+  salaryMax          Int?
+  salaryVisible      Boolean          @default(true)
+  status             JobStatus        @default(DRAFT)
+  featured           Boolean          @default(false)
+  urgent             Boolean          @default(false)
+  validThrough       DateTime?
+  confidential       Boolean          @default(false) // hide the client name on public pages
+  confidentialLabel  String? // shown instead of the client name, e.g. "Leading private bank"
+  viewCount          Int              @default(0)
+  seoTitle           String?
+  seoDescription     String?
+  publishedAt        DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  companyId          String
+  company            Company          @relation(fields: [companyId], references: [id])
+  postedById         String?
+  postedBy           User?            @relation("PostedJobs", fields: [postedById], references: [id])
+  applications       Application[]
+  savedBy            SavedJob[]
+  publicApplications JobApplication[]
 
   @@index([status, publishedAt])
   @@index([departmentId])
   @@index([location])
+}
+
+/// Public "Apply" submissions from the website. No user account is involved.
+/// The resume file lives in Cloudflare R2 under `resumeKey`; only metadata is stored here.
+model JobApplication {
+  id                 String            @id @default(cuid())
+  jobId              String
+  job                Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  applicantName      String
+  applicantEmail     String // lowercased
+  applicantPhone     String // +91XXXXXXXXXX
+  dateOfBirth        DateTime // date only, stored at 00:00 UTC; age is computed
+  qualification      String // one of QUALIFICATIONS in src/features/jobs/options.ts
+  currentCity        String // one of INDIAN_CITIES or "Other"
+  currentCompany     String?
+  currentDesignation String?
+  experienceYears    Int
+  currentCtcLpa      Float?
+  expectedCtcLpa     Float
+  noticePeriodDays   Int // 0, 15, 30, 60, 90
+  skills             Json              @default("[]") // JSON string: string[], max 10
+  linkedinUrl        String?
+  coverNote          String?
+  resumeKey          String            @unique // R2 object key, resumes/<32 hex>.<ext>
+  resumeFileName     String // original name, sanitised, max 120
+  resumeMimeType     String // from the detected file kind, not the browser
+  resumeSizeBytes    Int
+  consentAt          DateTime
+  status             ApplicationStatus @default(APPLIED)
+  statusHistory      Json              @default("[]") // JSON string: {status, at, by?}[]
+  adminNote          String?
+  source             String            @default("website")
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@unique([jobId, applicantEmail])
+  @@index([status, createdAt])
+  @@index([jobId, createdAt])
+  @@index([dateOfBirth])
+  @@index([experienceYears])
+  @@index([currentCity])
+  @@index([expectedCtcLpa])
+}
+
+/// Operational failures that happen with no signed-in user (for example a resume
+/// upload to R2 failing for an applicant). Shown as a banner on /admin until resolved.
+model SystemIncident {
+  id         String    @id @default(cuid())
+  kind       String // "resume.upload" | "resume.download" | "resume.delete" | "cron.cleanup"
+  message    String // safe summary, no applicant personal data
+  detail     Json? // JSON string: { name, status, jobId }
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+  resolvedBy String?
+
+  @@index([resolvedAt, createdAt])
 }
 
 model Application {

@@ -54,6 +54,7 @@ Local toolchain at time of writing: Node v22.23.1.
 | `npx eslint src --max-warnings 0` | Lint. `next lint` does not exist in Next 16. |
 | `npx prisma studio` | Opens a database browser on the database in `DATABASE_URL`. |
 | `npx prisma db seed` | Runs `prisma/seed.ts`. **It deletes all data first.** See §7. |
+| `npm run seed:categories` | Upserts the 14 job role categories (`Department` rows) by slug. Never deletes. Safe to rerun. |
 
 There are no automated tests in `main`.
 
@@ -108,6 +109,7 @@ prisma/
   schema.prisma            PostgreSQL datasource.
   migrations/              Postgres migrations. `0_init` is the baseline of the schema as it was on 2026-11-12.
   seed.ts                  Wipes and refills the database.
+  seed-role-categories.ts  Upserts the job role categories. Safe to rerun.
   dev.db                   Old SQLite file. Git-ignored. Not used.
 docs/                      Planning documents from before the rebrand. Mostly out of date (see docs/README.md).
 uploads/                   Local resume files from the old portal. Git-ignored.
@@ -233,6 +235,11 @@ Columns typed `Json` (for example `BlogPost.tags`, `SuccessStory.results`, `Sett
 | `NewsletterSubscriber` | Email list. |
 | `Setting` | Key-value content blocks. |
 | `AuditLog` | One row per admin mutation. |
+| `Job` | Job posts. `confidential` hides the client name; `confidentialLabel` is shown instead. (Job board, in progress.) |
+| `Department` | Job role categories. Seeded by `npm run seed:categories`. |
+| `Company` | Client records attached to jobs. |
+| `JobApplication` | Public "Apply" submissions. Holds applicant details and resume metadata (`resumeKey` in Cloudflare R2). One row per job per email. |
+| `SystemIncident` | Failures with no signed-in user, such as a resume upload failing. Shown on `/admin` until resolved. |
 
 ### Seed (`prisma/seed.ts`)
 
