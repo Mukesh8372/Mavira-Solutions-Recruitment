@@ -76,6 +76,7 @@ src/
       admin/               layout.tsx = ADMIN or STAFF only. One folder per admin screen.
     api/auth/[...nextauth] NextAuth route handlers.
     api/v1/resumes/[applicationId]  Streams an applicant's resume to a signed-in ADMIN or STAFF user (see §8).
+    api/cron/cleanup-resumes  Daily job: closes expired jobs, deletes orphaned resume files (see §7, Resume storage).
     sitemap.ts robots.ts manifest.ts not-found.tsx icon.png favicon.ico globals.css
   features/<feature>/      Vertical slices: actions.ts ("use server"), queries.ts ("server-only"), client forms.
     admin/                 Lead status, testimonials, blog, user roles, newsletter, audit log.
@@ -260,6 +261,15 @@ Columns typed `Json` (for example `BlogPost.tags`, `SuccessStory.results`, `Sett
 | `JobApplication` | Public "Apply" submissions. Holds applicant details and resume metadata (`resumeKey` in Cloudflare R2). One row per job per email. |
 | `SystemIncident` | Failures with no signed-in user, such as a resume upload failing. Shown on `/admin` until resolved. |
 
+### Resume storage
+
+Resume files live in one private Cloudflare R2 bucket, reached through the S3 API by `src/lib/resume-storage.ts`. Object keys are `resumes/<32 hex>.<ext>`. The database row (`JobApplication.resumeKey`) is the only reference to a file.
+
+- Upload: `applyToJob` checks the bytes, writes the file, then the row. If the row write fails, it deletes the file.
+- Download: `/api/v1/resumes/[applicationId]` only, ADMIN or STAFF.
+- Delete: `deleteApplication` removes the row, then the file. A failed file delete is recorded as a `SystemIncident`.
+- Cleanup: `GET /api/cron/cleanup-resumes` (header `Authorization: Bearer <CRON_SECRET>`) closes PUBLISHED jobs past `validThrough` and deletes files older than 24 hours that no row references. `vercel.json` schedules it daily at 21:30 UTC (03:00 IST). On another host, schedule the same request. Without `CRON_SECRET` the route runs only outside production.
+
 ### Seed (`prisma/seed.ts`)
 
 **The seed deletes every row in every table, then inserts sample data.** Do not run it against a database that holds real data. Check `DATABASE_URL` first.
@@ -300,7 +310,7 @@ These items are unused by the current site. Remove them only as a deliberate cha
 
 1. **Forgot password does nothing.** `requestPasswordReset` returns success but sends no email and stores no token. The only way to reset a password is the change-password form while signed in, or a direct database update.
 2. **Testimonials cannot be created or edited in the admin.** The seed text says "replace from the admin panel", but there is no screen for it.
-3. **No deployment configuration in the repo.** There is no `vercel.json` and no `.vercel/` folder. `docs/07-deployment-guide.md` refers to the old portal and to the `production-readiness` branch. The current deployment state is not recorded in the repo.
+3. **Deployment state is not recorded in the repo.** `vercel.json` holds only the cron schedule. There is no `.vercel/` folder. `docs/07-deployment-guide.md` refers to the old portal and to the `production-readiness` branch. Hosting is undecided: Vercel's Hobby plan is restricted to non-commercial personal use.
 4. **Prisma warns** that `package.json#prisma` (the seed command) is deprecated and will be removed in Prisma 7.
 
 ## 11. Environment variables
@@ -314,7 +324,7 @@ These items are unused by the current site. Remove them only as a deliberate cha
 | `R2_ACCOUNT_ID` | `src/lib/resume-storage.ts` | Cloudflare account ID. Forms the endpoint `https://<id>.r2.cloudflarestorage.com`. |
 | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | `src/lib/resume-storage.ts` | An R2 API token with "Object Read & Write" on the one bucket. |
 | `R2_BUCKET` | `src/lib/resume-storage.ts` | Bucket name. Public access must stay off. |
-| `CRON_SECRET` | `/api/cron/cleanup-resumes` | Bearer token the scheduler sends. (Route lands with the cleanup job.) |
+| `CRON_SECRET` | `/api/cron/cleanup-resumes` | Bearer token the scheduler sends. Required in production. |
 | `ADMIN_EMAIL` | `prisma/seed.ts` only | Admin login created by the seed. |
 | `ADMIN_PASSWORD` | `prisma/seed.ts` only | If empty, the seed uses `Password@123`. |
 
