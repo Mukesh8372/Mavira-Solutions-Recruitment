@@ -44,6 +44,7 @@ This file holds the rules for changing the code.
 - Use the design tokens in `src/app/globals.css`: `bg-background`, `bg-background-alt`, `bg-surface`, `text-foreground`, `text-body`, `text-faint`, `border-line`, `primary`, `secondary`, `accent`, `rounded-btn`, `rounded-card`, `shadow-soft`, `shadow-card`. Do not add raw hex colors in components.
 - Use `BrandIcon` from `@/components/shared/brand-icons` for social logos. `lucide-react` has none.
 - Brand and legal facts come from `src/config/site.ts` or the contact setting. Do not hard-code them in pages.
+- Resume files: only `src/lib/resume-storage.ts` talks to R2, and resumes are served only through `/api/v1/resumes/[applicationId]` behind `requireRole`. Never build a public URL to a resume. Check uploads with `detectResumeKind` from `src/lib/resumes.ts` before storing them.
 - Do not add npm packages without a clear need. Several unused packages are already installed (CONTEXT.md §2).
 
 ## Content rules

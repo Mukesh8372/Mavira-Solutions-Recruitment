@@ -74,7 +74,7 @@ src/
     (dashboard)/           Admin area. layout.tsx = session check + DashboardShell.
       admin/               layout.tsx = ADMIN or STAFF only. One folder per admin screen.
     api/auth/[...nextauth] NextAuth route handlers.
-    api/v1/files/[name]    Serves uploaded resumes to authorized users (legacy, see §9).
+    api/v1/resumes/[applicationId]  Streams an applicant's resume to a signed-in ADMIN or STAFF user (see §8).
     sitemap.ts robots.ts manifest.ts not-found.tsx icon.png favicon.ico globals.css
   features/<feature>/      Vertical slices: actions.ts ("use server"), queries.ts ("server-only"), client forms.
     admin/                 Lead status, testimonials, blog, user roles, newsletter, audit log.
@@ -108,7 +108,8 @@ src/
     seo.ts                 JSON-LD builders.
     utils.ts               cn(), jsonArray(), jsonValue(), slugify(), shortId().
     format.ts              Date, INR/LPA and label formatters.
-    uploads.ts             Local-disk resume storage (legacy, see §9).
+    resume-storage.ts      The only module that talks to Cloudflare R2: put, get (stream), delete, list.
+    incidents.ts           recordIncident(): SystemIncident rows for failures with no signed-in user.
     motion.ts              framer-motion variants.
 prisma/
   schema.prisma            PostgreSQL datasource.
@@ -117,7 +118,7 @@ prisma/
   seed-role-categories.ts  Upserts the job role categories. Safe to rerun.
   dev.db                   Old SQLite file. Git-ignored. Not used.
 docs/                      Planning documents from before the rebrand. Mostly out of date (see docs/README.md).
-uploads/                   Local resume files from the old portal. Git-ignored.
+uploads/                   Local resume files from the old portal. Git-ignored. Nothing reads it.
 public/logo.png            Logo.
 ```
 
@@ -267,6 +268,7 @@ The seed creates:
 - Rate limits are in memory. They reset on restart and are per instance. On serverless hosting, each instance has its own counters.
 - Security headers are set in `next.config.ts`: X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy, HSTS. There is no Content-Security-Policy.
 - The blog markdown renderer (`src/features/blog/markdown.tsx`) HTML-escapes all input first and allows only `http(s)`, `/`, `#` and `mailto:` links.
+- Resumes are stored in a private Cloudflare R2 bucket (encrypted at rest by R2). They leave storage only through `/api/v1/resumes/[applicationId]`, which requires an ADMIN or STAFF session and sends the file as an attachment with `nosniff`. The server checks each upload's magic bytes before storing it (`src/lib/resumes.ts`). There is no virus scan.
 - There is no way to create a user from the UI. To add a staff member, insert a `User` row with a bcrypt hash (cost 12), then set the role in `/admin/users`.
 
 ## 9. Legacy code left from the job portal
@@ -274,7 +276,6 @@ The seed creates:
 These items are unused by the current site. Remove them only as a deliberate change.
 
 - Prisma models: `CandidateProfile`, `EmployerProfile`, `Company`, `Department`, `Job`, `Application`, `Interview`, `Resume`, `SavedJob`, `ContactQuery`, `Notification`. Enums for jobs, applications and interviews.
-- `src/lib/uploads.ts` and `src/app/api/v1/files/[name]/route.ts` (resume storage and download).
 - `jobPostingJsonLd`, `formatSalaryRange`, `labelApplicationStatus`, `ApplicationStatusBadge`, `JobStatusBadge`, `InterviewStatusBadge`.
 - `departmentSchema` in `site-content/schemas.ts`. `deleteIndustry` still counts attached jobs.
 - Content blocks with an action, a form and a query but no screen: `StatsForm`, `LogosForm`, `TeamForm`, `saveStatsContent`, `saveLogosContent`, `saveTeam`, `getClientLogos`, `getTeam`. No public page reads them.
@@ -297,6 +298,10 @@ These items are unused by the current site. Remove them only as a deliberate cha
 | `AUTH_SECRET` | NextAuth | Long random string. Different per environment. |
 | `AUTH_TRUST_HOST` | NextAuth | `true` behind a proxy such as Vercel. |
 | `NEXT_PUBLIC_SITE_URL` | `siteConfig.url` | Used for canonical URLs, sitemap, JSON-LD and `metadataBase`. Fallback `http://localhost:3000`. |
+| `R2_ACCOUNT_ID` | `src/lib/resume-storage.ts` | Cloudflare account ID. Forms the endpoint `https://<id>.r2.cloudflarestorage.com`. |
+| `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | `src/lib/resume-storage.ts` | An R2 API token with "Object Read & Write" on the one bucket. |
+| `R2_BUCKET` | `src/lib/resume-storage.ts` | Bucket name. Public access must stay off. |
+| `CRON_SECRET` | `/api/cron/cleanup-resumes` | Bearer token the scheduler sends. (Route lands with the cleanup job.) |
 | `ADMIN_EMAIL` | `prisma/seed.ts` only | Admin login created by the seed. |
 | `ADMIN_PASSWORD` | `prisma/seed.ts` only | If empty, the seed uses `Password@123`. |
 
