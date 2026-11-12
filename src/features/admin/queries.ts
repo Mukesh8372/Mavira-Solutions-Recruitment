@@ -116,6 +116,10 @@ export async function getAdminApplications(f: ApplicantFilters) {
   if (to) and.push({ createdAt: { lte: to } });
   if (f.q) {
     const q = f.q;
+    // `skills` is a Json column. Prisma's case-insensitive JSON filter compiles to
+    // lower(jsonb), which Postgres rejects, so match it with a parameterised raw read.
+    const pattern = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+    const skillMatches = await prisma.$queryRaw<{ id: string }[]>`SELECT "id" FROM "JobApplication" WHERE "skills"::text ILIKE ${pattern}`;
     and.push({
       OR: [
         { applicantName: { contains: q, mode: "insensitive" } },
@@ -123,7 +127,7 @@ export async function getAdminApplications(f: ApplicantFilters) {
         { applicantPhone: { contains: q.replace(/[\s-]/g, "") } },
         { currentCompany: { contains: q, mode: "insensitive" } },
         { currentDesignation: { contains: q, mode: "insensitive" } },
-        { skills: { string_contains: q, mode: "insensitive" } },
+        ...(skillMatches.length ? [{ id: { in: skillMatches.map((r) => r.id) } }] : []),
       ],
     });
   }
