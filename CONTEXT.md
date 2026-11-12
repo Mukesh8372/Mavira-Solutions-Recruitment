@@ -37,6 +37,7 @@ The database schema still has the old portal tables. See [§9 Legacy code](#9-le
 | Theme | `next-themes` (class strategy) | — |
 | Toasts | `sonner` | — |
 | Password hash | `bcryptjs`, cost 12 | — |
+| Tests | `vitest` (+ `vite`, its required peer) | ^5.0.5 |
 
 Installed but not imported anywhere in `src/`: `@tanstack/react-query`, `@tanstack/react-table`, `date-fns`.
 
@@ -52,11 +53,12 @@ Local toolchain at time of writing: Node v22.23.1.
 | `npm run start` | Serves the production build. |
 | `npx tsc --noEmit` | Typecheck. |
 | `npx eslint src --max-warnings 0` | Lint. `next lint` does not exist in Next 16. |
+| `npm test` | Runs the Vitest unit tests (`src/**/*.test.ts`). No database or network. |
 | `npx prisma studio` | Opens a database browser on the database in `DATABASE_URL`. |
 | `npx prisma db seed` | Runs `prisma/seed.ts`. **It deletes all data first.** See §7. |
 | `npm run seed:categories` | Upserts the 14 job role categories (`Department` rows) by slug. Never deletes. Safe to rerun. |
 
-There are no automated tests in `main`.
+Unit tests live next to the code as `*.test.ts` and run with `npm test`. `vitest.config.ts` maps `@` to `src/` and replaces the `server-only` package with `src/test/server-only-stub.ts`. There are no end-to-end tests.
 
 Verification state on 2026-11-07: `tsc` clean, `eslint` clean (0 warnings), `next build` succeeds (43 routes).
 
@@ -82,6 +84,7 @@ src/
     home/                  Homepage sections.
     leads/                 Public "Request Talent" form and action.
     newsletter/            Public newsletter form and action.
+    jobs/                  Job board (in progress): options.ts (fixed lists), schemas.ts (apply form validation).
     site-content/          Admin-editable content blocks stored in the Setting table, plus FAQ,
                            industry and success-story CRUD.
   components/
@@ -96,10 +99,12 @@ src/
   content/
     services.ts            The 5 service pages (static content in code).
     process.ts             Defaults for process steps, why-us cards, client logos, achievements.
+  test/                    server-only-stub.ts for Vitest.
   lib/
     auth.ts                NextAuth config, requireRole(), dashboardPathForRole.
     prisma.ts              PrismaClient singleton.
     rate-limit.ts          In-memory sliding-window limiter + clientKey(scope) from x-forwarded-for.
+    resumes.ts             Resume file rules: 2 MB limit, allowed types, magic-byte detection, safe names.
     seo.ts                 JSON-LD builders.
     utils.ts               cn(), jsonArray(), jsonValue(), slugify(), shortId().
     format.ts              Date, INR/LPA and label formatters.

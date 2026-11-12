@@ -53,11 +53,12 @@ This file holds the rules for changing the code.
 
 ## Verification before you finish
 
-Run all three and report the result:
+Run all four and report the result:
 
 ```bash
 npx tsc --noEmit
 npx eslint src --max-warnings 0
+npm test
 npm run build
 ```
 
