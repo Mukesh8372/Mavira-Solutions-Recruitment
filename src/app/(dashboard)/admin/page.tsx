@@ -7,26 +7,33 @@ import { LeadStatusBadge } from "@/components/dashboard/status-badge";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { TableShell, Table, THead, TH, TBody, TR, TD } from "@/components/dashboard/data-table";
 import { DashboardIcon } from "@/components/shared/dashboard-icon";
-import { getAdminOverview } from "@/features/admin/queries";
+import { getAdminOverview, getOpenIncidents } from "@/features/admin/queries";
+import { IncidentBanner } from "@/features/jobs/incident-banner";
 import { formatRelativeDate } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Admin overview", robots: { index: false } };
 
 const quickLinks = [
+  { label: "Post a job", href: "/admin/jobs/new", icon: "briefcase" },
+  { label: "Review applications", href: "/admin/applications?status=APPLIED", icon: "inbox" },
   { label: "Edit site content", href: "/admin/site-content", icon: "globe" },
   { label: "Work the leads", href: "/admin/leads", icon: "target" },
   { label: "Write a post", href: "/admin/blog/new", icon: "newspaper" },
 ];
 
 export default async function AdminOverviewPage() {
-  const data = await getAdminOverview();
+  const [data, incidents] = await Promise.all([getAdminOverview(), getOpenIncidents()]);
 
   return (
     <>
-      <PageHeader title="Admin overview" description="The website at a glance — inbound leads and site content." />
+      <PageHeader title="Admin overview" description="The website at a glance — leads, applications and site content." />
+
+      <IncidentBanner incidents={incidents} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="New leads" value={data.newLeads} icon="target" tone="primary" hint={data.newLeads > 0 ? "Waiting for first contact" : "All followed up"} />
+        <StatCard label="Open jobs" value={data.openJobs} icon="briefcase" tone="secondary" hint="Published and accepting applications" />
+        <StatCard label="New applications" value={data.newApplications} icon="inbox" tone="accent" hint={data.newApplications > 0 ? "Not yet screened" : "All screened"} />
         <StatCard label="Published posts" value={data.publishedPosts} icon="newspaper" tone="secondary" hint={`${data.draftPosts} in draft`} />
         <StatCard label="Newsletter subscribers" value={data.subscribers} icon="send" tone="accent" />
         <StatCard label="Testimonials" value={data.testimonials} icon="quote" tone="warning" hint={`${data.pendingTestimonials} awaiting approval`} />

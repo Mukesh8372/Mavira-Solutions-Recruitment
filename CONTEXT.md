@@ -10,7 +10,7 @@ The application is the public website of **Mavira Solutions Private Limited**, a
 The site is a **brochure site with a job board and an admin CMS**.
 
 - Public visitors read pages, send a "Request Talent" lead, subscribe to the newsletter, browse open jobs at `/jobs` and apply with a resume.
-- Applicants have no accounts. One application per job per email; the admin reviews them under `/admin/applications` (Step 5 of the job-board work, in progress).
+- Applicants have no accounts. One application per job per email; the admin reviews them under `/admin/applications`.
 - Admin and staff users sign in at `/login` and edit content at `/admin`.
 - There is no public sign-up. There are no candidate or employer accounts in use.
 
@@ -174,6 +174,9 @@ The blog categories are fixed in `src/features/blog/queries.ts`: `career-advice`
 |---|---|
 | `/admin` | Counts and the 8 latest leads. |
 | `/admin/leads` | Lead list, filter by status (`?status=new`), change status. |
+| `/admin/jobs`, `/new`, `/[id]/edit` | Post, edit, publish, close, reopen, archive jobs; featured/urgent flags; application counts. Status moves follow `JOB_STATUS_TRANSITIONS` in `features/jobs/admin-schemas.ts`. |
+| `/admin/applications` | Applicant list with URL filters (`job`, `category`, `status`, `ageMin`/`ageMax`, `expMin`/`expMax`, `ctcMin`/`ctcMax`, `city`, `qualification`, `notice`, `from`/`to`, `q`, `sort`, `page`), 25 a page. Download resume, change status, internal note, delete. |
+| `/admin/clients` | Create, edit, delete clients (`Company` rows). Deletion is blocked while jobs are attached. |
 | `/admin/site-content` | Edit announcement bar, hero, process (4 steps), why-us (4 cards), achievements, contact details. |
 | `/admin/blog`, `/new`, `/[id]/edit` | Write, edit, publish and delete markdown posts. |
 | `/admin/success-stories` | Create, edit, delete stories. |
@@ -184,7 +187,7 @@ The blog categories are fixed in `src/features/blog/queries.ts`: `career-advice`
 | `/admin/users` | List users. ADMIN can change roles. STAFF has read-only access. |
 | `/admin/settings` | Account info, change password, last 100 audit-log rows. |
 
-Admin lists show the 50 newest rows. There is no pagination.
+Admin lists show the 50 newest rows without pagination, except `/admin/applications`, which filters and paginates (25 a page). `/admin` shows a red banner for unresolved `SystemIncident` rows.
 
 ## 6. How data flows
 
@@ -222,7 +225,8 @@ Each table has one helper that lists its pages:
 | FaqItem, Setting blocks | `revalidateContentPages()` in `features/site-content/actions.ts` | `/`, `/employers`, `/process`, `/why-choose-us`, `/about`, `/faq`, `/services/*` |
 | Setting: contact, announcement | inline | Whole layout tree |
 | Job | `revalidateJobPages()` in `features/jobs/cache.ts` | `/`, `/jobs`, `/jobs/*`, `/jobs/category/*`, `/industries/*`, `/sitemap.xml`, `/admin`, `/admin/jobs`, `/admin/applications` |
-| JobApplication | inline in `applyToJob` | `/admin`, `/admin/applications`, `/admin/jobs` |
+| JobApplication | inline in `applyToJob` and `features/jobs/admin-actions.ts` | `/admin`, `/admin/applications`, `/admin/jobs` |
+| Company (client) | `saveClient` / `deleteClient` in `features/jobs/admin-actions.ts` | `/admin/clients` plus `revalidateJobPages()` |
 
 `/sitemap.xml` is a cached route handler. Name it on its own: `revalidatePath("/sitemap.xml")`.
 
@@ -285,10 +289,10 @@ The seed creates:
 These items are unused by the current site. Remove them only as a deliberate change.
 
 - Prisma models: `CandidateProfile`, `EmployerProfile`, `Company`, `Department`, `Job`, `Application`, `Interview`, `Resume`, `SavedJob`, `ContactQuery`, `Notification`. Enums for jobs, applications and interviews.
-- `jobPostingJsonLd`, `formatSalaryRange`, `labelApplicationStatus`, `ApplicationStatusBadge`, `JobStatusBadge`, `InterviewStatusBadge`.
-- `departmentSchema` in `site-content/schemas.ts`. `deleteIndustry` still counts attached jobs.
+- `InterviewStatusBadge` in `components/dashboard/status-badge.tsx`.
+- `departmentSchema` in `site-content/schemas.ts` (role categories are seeded, not edited in the admin).
 - Content blocks with an action, a form and a query but no screen: `StatsForm`, `LogosForm`, `TeamForm`, `saveStatsContent`, `saveLogosContent`, `saveTeam`, `getClientLogos`, `getTeam`. No public page reads them.
-- Unimported components: `components/shared/stat-counter.tsx`, `components/ui/card.tsx`, `components/ui/pagination.tsx`.
+- Unimported components: `components/shared/stat-counter.tsx`.
 - `EMPLOYER` and `CANDIDATE` roles land on `/` after sign-in and have no screens.
 - Branch `production-readiness` (2026-07-31) adds email, tests, Blob storage, cron and invoices **for the old job portal**. It branched before the rebrand. Do not merge it as is.
 
