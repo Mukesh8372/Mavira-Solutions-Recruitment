@@ -127,9 +127,12 @@ export async function deleteResumeQuietly(key: string, context?: Record<string, 
   } catch (err) {
     const e = err instanceof StorageError ? err : new StorageError("delete", err);
     console.error("[resume-storage] delete failed", key, e.message);
-    await recordIncident("resume.delete", "A resume file could not be deleted from storage.", {
+    // The key is a random name, not applicant data, so it is safe to record. It lets an
+    // admin delete the file by hand from the bucket if the cleanup job is not running.
+    await recordIncident("resume.delete", `A resume file could not be deleted from storage. File: ${key}`, {
       error: e.message,
       status: e.status,
+      key,
       ...context,
     });
   }

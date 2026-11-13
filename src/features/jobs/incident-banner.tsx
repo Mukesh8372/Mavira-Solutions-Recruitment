@@ -1,8 +1,17 @@
 import { TriangleAlert } from "lucide-react";
 import { formatDateTime } from "@/lib/format";
+import { jsonValue } from "@/lib/utils";
 import { ResolveIncidentButton } from "@/features/jobs/incident-actions";
 
-type Incident = { id: string; kind: string; message: string; createdAt: Date };
+type Incident = { id: string; kind: string; message: string; detail: unknown; createdAt: Date };
+
+/** Renders the stored detail object as "name: value" pairs. Never throws on bad data. */
+function detailPairs(detail: unknown): [string, string][] {
+  const obj = jsonValue<Record<string, unknown>>(detail, {});
+  return Object.entries(obj)
+    .filter(([, v]) => v !== undefined && v !== null && v !== "")
+    .map(([k, v]) => [k, String(v)]);
+}
 
 const kindLabels: Record<string, string> = {
   "resume.upload": "Resume upload failed",
@@ -31,7 +40,15 @@ export function IncidentBanner({ incidents }: { incidents: Incident[] }) {
                 <span>
                   <span className="font-semibold text-foreground">{kindLabels[i.kind] ?? i.kind}</span>
                   <span className="text-body"> — {i.message}</span>
-                  <span className="block text-[12px] text-faint">{formatDateTime(i.createdAt)}</span>
+                  <span className="block text-[12px] text-faint">
+                    {formatDateTime(i.createdAt)}
+                    {detailPairs(i.detail).map(([k, v]) => (
+                      <span key={k}>
+                        {" · "}
+                        {k}: <code className="font-mono">{v}</code>
+                      </span>
+                    ))}
+                  </span>
                 </span>
                 <ResolveIncidentButton id={i.id} />
               </li>
