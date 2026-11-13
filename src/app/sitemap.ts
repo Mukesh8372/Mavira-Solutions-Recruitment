@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { siteConfig } from "@/config/site";
 import { servicesContent } from "@/content/services";
 import { blogCategories } from "@/features/blog/queries";
+import { openJobWhere } from "@/features/jobs/queries";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteConfig.url;
@@ -12,6 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/employers`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${base}/services`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${base}/industries`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${base}/jobs`, changeFrequency: "daily", priority: 0.8 },
     { url: `${base}/about`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${base}/why-choose-us`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${base}/process`, changeFrequency: "monthly", priority: 0.6 },
@@ -34,10 +36,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   ];
 
-  const [posts, industries, stories] = await Promise.all([
+  const [posts, industries, stories, jobs, departments] = await Promise.all([
     prisma.blogPost.findMany({ where: { status: "PUBLISHED" }, select: { slug: true, updatedAt: true } }),
     prisma.industry.findMany({ select: { slug: true } }),
     prisma.successStory.findMany({ where: { status: "PUBLISHED" }, select: { slug: true, createdAt: true } }),
+    prisma.job.findMany({ where: openJobWhere(), select: { slug: true, updatedAt: true } }),
+    // Only categories with an open job. An empty category page has nothing for search engines.
+    prisma.department.findMany({ where: { jobs: { some: openJobWhere() } }, select: { slug: true } }),
   ]);
 
   return [
@@ -45,5 +50,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...posts.map((p) => ({ url: `${base}/blog/${p.slug}`, lastModified: p.updatedAt, changeFrequency: "monthly" as const, priority: 0.6 })),
     ...industries.map((i) => ({ url: `${base}/industries/${i.slug}`, changeFrequency: "monthly" as const, priority: 0.6 })),
     ...stories.map((s) => ({ url: `${base}/success-stories/${s.slug}`, lastModified: s.createdAt, changeFrequency: "yearly" as const, priority: 0.5 })),
+    ...departments.map((d) => ({ url: `${base}/jobs/category/${d.slug}`, changeFrequency: "daily" as const, priority: 0.6 })),
+    ...jobs.map((j) => ({ url: `${base}/jobs/${j.slug}`, lastModified: j.updatedAt, changeFrequency: "weekly" as const, priority: 0.7 })),
   ];
 }

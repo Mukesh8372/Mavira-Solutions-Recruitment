@@ -10,6 +10,13 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  experimental: {
+    serverActions: {
+      // The public apply form posts the resume (max 2 MB) with its fields in one
+      // multipart body. Next counts the raw body, so leave room for the overhead.
+      bodySizeLimit: "2500kb",
+    },
+  },
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },

@@ -11,10 +11,10 @@ This file holds the rules for changing the code.
 
 ## Before you change anything
 
-- This is a brochure site with an admin CMS. It is not a job portal. Do not add job, candidate or employer features unless the user asks.
+- This is a brochure site with a job board and an admin CMS. Applicants have no accounts. Do not add candidate or employer accounts, dashboards or sign-up unless the user asks.
 - `.env` points at a live Neon Postgres database. Treat it as production unless the user says otherwise.
-- **Never run `npx prisma db seed` without asking.** The seed deletes every row in every table.
-- Never run `prisma migrate dev`, `prisma migrate reset`, `prisma db push` or SQL that writes, unless the user asks. The migration history is broken (CONTEXT.md §10, issue 1).
+- **Never run `npx prisma db seed` without asking.** The seed deletes every row in every table. New reference data goes in an upsert-only script like `prisma/seed-role-categories.ts`, never in `seed.ts`.
+- Never run `prisma migrate dev`, `prisma migrate reset`, `prisma db push` or SQL that writes. For a schema change, follow the workflow in CONTEXT.md §7: generate the migration with `prisma migrate diff`, review it, then ask before `prisma migrate deploy`.
 - Do not merge the `production-readiness` branch. It belongs to the old job portal.
 
 ## Next.js 16 rules
@@ -44,6 +44,7 @@ This file holds the rules for changing the code.
 - Use the design tokens in `src/app/globals.css`: `bg-background`, `bg-background-alt`, `bg-surface`, `text-foreground`, `text-body`, `text-faint`, `border-line`, `primary`, `secondary`, `accent`, `rounded-btn`, `rounded-card`, `shadow-soft`, `shadow-card`. Do not add raw hex colors in components.
 - Use `BrandIcon` from `@/components/shared/brand-icons` for social logos. `lucide-react` has none.
 - Brand and legal facts come from `src/config/site.ts` or the contact setting. Do not hard-code them in pages.
+- Resume files: only `src/lib/resume-storage.ts` talks to R2, and resumes are served only through `/api/v1/resumes/[applicationId]` behind `requireRole`. Never build a public URL to a resume. Check uploads with `detectResumeKind` from `src/lib/resumes.ts` before storing them.
 - Do not add npm packages without a clear need. Several unused packages are already installed (CONTEXT.md §2).
 
 ## Content rules
@@ -53,11 +54,12 @@ This file holds the rules for changing the code.
 
 ## Verification before you finish
 
-Run all three and report the result:
+Run all four and report the result:
 
 ```bash
 npx tsc --noEmit
 npx eslint src --max-warnings 0
+npm test
 npm run build
 ```
 

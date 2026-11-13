@@ -8,6 +8,7 @@ import { ProcessSection } from "@/features/home/process-section";
 import { WhyUsSection } from "@/features/home/why-us-section";
 import { TestimonialsCarousel } from "@/features/home/testimonials-carousel";
 import { BlogCard } from "@/features/blog/blog-card";
+import { LatestJobsSection } from "@/features/jobs/latest-jobs-section";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { Reveal, RevealGroup, RevealItem } from "@/components/shared/reveal";
 import { Accordion, AccordionItem } from "@/components/ui/accordion";
@@ -41,6 +42,7 @@ export default async function HomePage() {
       <Hero content={hero} />
       <ServicesSection />
       <IndustriesSection />
+      <LatestJobsSection />
       <ProcessSection />
       <WhyUsSection />
 

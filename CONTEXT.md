@@ -7,9 +7,10 @@ Update this file in the same commit as any change that makes a fact here wrong.
 
 The application is the public website of **Mavira Solutions Private Limited**, a recruitment agency in Thane, Maharashtra. The agency recruits for BFSI (banking, financial services, insurance), stock broking, wealth management, NBFC and FinTech companies.
 
-The site is a **brochure site with an admin CMS**. It is not a job portal.
+The site is a **brochure site with a job board and an admin CMS**.
 
-- Public visitors read pages, send a "Request Talent" lead, and subscribe to the newsletter.
+- Public visitors read pages, send a "Request Talent" lead, subscribe to the newsletter, browse open jobs at `/jobs` and apply with a resume.
+- Applicants have no accounts. One application per job per email; the admin reviews them under `/admin/applications`.
 - Admin and staff users sign in at `/login` and edit content at `/admin`.
 - There is no public sign-up. There are no candidate or employer accounts in use.
 
@@ -37,6 +38,7 @@ The database schema still has the old portal tables. See [§9 Legacy code](#9-le
 | Theme | `next-themes` (class strategy) | — |
 | Toasts | `sonner` | — |
 | Password hash | `bcryptjs`, cost 12 | — |
+| Tests | `vitest` (+ `vite`, its required peer) | ^5.0.5 |
 
 Installed but not imported anywhere in `src/`: `@tanstack/react-query`, `@tanstack/react-table`, `date-fns`.
 
@@ -52,10 +54,12 @@ Local toolchain at time of writing: Node v22.23.1.
 | `npm run start` | Serves the production build. |
 | `npx tsc --noEmit` | Typecheck. |
 | `npx eslint src --max-warnings 0` | Lint. `next lint` does not exist in Next 16. |
+| `npm test` | Runs the Vitest unit tests (`src/**/*.test.ts`). No database or network. |
 | `npx prisma studio` | Opens a database browser on the database in `DATABASE_URL`. |
 | `npx prisma db seed` | Runs `prisma/seed.ts`. **It deletes all data first.** See §7. |
+| `npm run seed:categories` | Upserts the 14 job role categories (`Department` rows) by slug. Never deletes. Safe to rerun. |
 
-There are no automated tests in `main`.
+Unit tests live next to the code as `*.test.ts` and run with `npm test`. `vitest.config.ts` maps `@` to `src/` and replaces the `server-only` package with `src/test/server-only-stub.ts`. There are no end-to-end tests.
 
 Verification state on 2026-11-07: `tsc` clean, `eslint` clean (0 warnings), `next build` succeeds (43 routes).
 
@@ -71,7 +75,8 @@ src/
     (dashboard)/           Admin area. layout.tsx = session check + DashboardShell.
       admin/               layout.tsx = ADMIN or STAFF only. One folder per admin screen.
     api/auth/[...nextauth] NextAuth route handlers.
-    api/v1/files/[name]    Serves uploaded resumes to authorized users (legacy, see §9).
+    api/v1/resumes/[applicationId]  Streams an applicant's resume to a signed-in ADMIN or STAFF user (see §8).
+    api/cron/cleanup-resumes  Daily job: closes expired jobs, deletes orphaned resume files (see §7, Resume storage).
     sitemap.ts robots.ts manifest.ts not-found.tsx icon.png favicon.ico globals.css
   features/<feature>/      Vertical slices: actions.ts ("use server"), queries.ts ("server-only"), client forms.
     admin/                 Lead status, testimonials, blog, user roles, newsletter, audit log.
@@ -81,6 +86,12 @@ src/
     home/                  Homepage sections.
     leads/                 Public "Request Talent" form and action.
     newsletter/            Public newsletter form and action.
+    jobs/                  Job board. queries.ts (open-job reads), display.ts (filters, URLs, isJobOpen),
+                           options.ts (fixed lists, city suggestions, normalizeCity), schemas.ts (apply validation),
+                           actions.ts (applyToJob), cache.ts (revalidateJobPages), job-card, job-filters,
+                           job-search-form, apply-form, latest-jobs-section (home), industry-jobs-section (industry pages),
+                           category-actions.ts + categories-manager (role categories), quick-add (add a category or
+                           industry from the job form).
     site-content/          Admin-editable content blocks stored in the Setting table, plus FAQ,
                            industry and success-story CRUD.
   components/
@@ -95,22 +106,26 @@ src/
   content/
     services.ts            The 5 service pages (static content in code).
     process.ts             Defaults for process steps, why-us cards, client logos, achievements.
+  test/                    server-only-stub.ts for Vitest.
   lib/
     auth.ts                NextAuth config, requireRole(), dashboardPathForRole.
     prisma.ts              PrismaClient singleton.
     rate-limit.ts          In-memory sliding-window limiter + clientKey(scope) from x-forwarded-for.
+    resumes.ts             Resume file rules: 2 MB limit, allowed types, magic-byte detection, safe names.
     seo.ts                 JSON-LD builders.
     utils.ts               cn(), jsonArray(), jsonValue(), slugify(), shortId().
     format.ts              Date, INR/LPA and label formatters.
-    uploads.ts             Local-disk resume storage (legacy, see §9).
+    resume-storage.ts      The only module that talks to Cloudflare R2: put, get (stream), delete, list.
+    incidents.ts           recordIncident(): SystemIncident rows for failures with no signed-in user.
     motion.ts              framer-motion variants.
 prisma/
   schema.prisma            PostgreSQL datasource.
-  migrations/              SQLite-dialect migration. Broken for Postgres (see §10, issue 1).
+  migrations/              Postgres migrations. `0_init` is the baseline of the schema as it was on 2026-11-12.
   seed.ts                  Wipes and refills the database.
+  seed-role-categories.ts  Upserts the job role categories. Safe to rerun.
   dev.db                   Old SQLite file. Git-ignored. Not used.
 docs/                      Planning documents from before the rebrand. Mostly out of date (see docs/README.md).
-uploads/                   Local resume files from the old portal. Git-ignored.
+uploads/                   Local resume files from the old portal. Git-ignored. Nothing reads it.
 public/logo.png            Logo.
 ```
 
@@ -122,12 +137,15 @@ Import alias: `@/*` maps to `src/*`.
 
 | Path | Data source | Render |
 |---|---|---|
-| `/` | Setting (hero, achievements, process, why-us), Testimonial (approved + featured), FaqItem, BlogPost, Industry | Static |
+| `/` | Setting (hero, achievements, process, why-us), Testimonial (approved + featured), FaqItem, BlogPost, Industry, Job (6 newest open) | Static |
 | Footer on every public page | Setting (contact), Industry | — |
 | `/about` | Setting (achievements) | Static |
 | `/services`, `/services/[slug]` | `src/content/services.ts`, Setting (process) | Static / SSG (5 slugs) |
 | `/industries` | Industry | Static |
-| `/industries/[slug]` | Industry | Dynamic |
+| `/industries/[slug]` | Industry, Job (open jobs in the industry) | Dynamic |
+| `/jobs` | Job (open), Department, Industry. Filters in the query string: `q`, `location`, `category`, `industry`, `experience`, `type`, `mode`, `sort`, `page` (10 a page). | Dynamic |
+| `/jobs/[slug]` | Job, Department, Industry. DRAFT/ARCHIVED → 404. CLOSED or past `validThrough` → banner, no form, no JobPosting JSON-LD, `noindex`. Shows `employerLabel`, never a client name. Holds the apply form. | Dynamic |
+| `/jobs/category/[slug]` | Department, Job (open) | SSG (one per Department) |
 | `/employers` | Testimonial, FaqItem, Setting (process, contact). Holds the Request Talent form at `#request-talent`. | Static |
 | `/process` | Setting (process) | Static |
 | `/why-choose-us` | Setting (why-us), Testimonial | Static |
@@ -140,7 +158,7 @@ Import alias: `@/*` maps to `src/*`.
 | `/faq` | FaqItem, Setting (contact) | Static |
 | `/contact` | Setting (contact). No form. Phone, WhatsApp, email, map link. | Static |
 | `/privacy-policy`, `/terms` | Text in code | Static |
-| `/sitemap.xml` | Static list + BlogPost, Industry, SuccessStory | Static |
+| `/sitemap.xml` | Static list + BlogPost, Industry, SuccessStory, Department (only those with an open job), Job (open) | Static |
 
 "Static" means Next.js prerenders the page at build time **with data from the database**. The page changes only when a server action calls `revalidatePath` for that exact path, or on the next deploy. See §6.
 
@@ -159,17 +177,20 @@ The blog categories are fixed in `src/features/blog/queries.ts`: `career-advice`
 |---|---|
 | `/admin` | Counts and the 8 latest leads. |
 | `/admin/leads` | Lead list, filter by status (`?status=new`), change status. |
+| `/admin/jobs`, `/new`, `/[id]/edit` | Post, edit, publish, close, reopen, archive jobs; featured/urgent flags; application counts. Status moves follow `JOB_STATUS_TRANSITIONS` in `features/jobs/admin-schemas.ts`. The form can add a role category or an industry without leaving the page. |
+| `/admin/categories` | Add, rename and delete role categories (`Department`). A category that jobs use (any status) can't be deleted; "Move jobs, then delete" moves them to another category in one transaction. The slug follows a rename only while no job uses the category. |
+| `/admin/applications` | Applicant list with URL filters (`job`, `category`, `status`, `ageMin`/`ageMax`, `expMin`/`expMax`, `ctcMin`/`ctcMax`, `city`, `qualification`, `notice`, `from`/`to`, `q`, `sort`, `page`), 25 a page. The city list shows the cities applicants entered, with counts. Download resume, change status, internal note, delete. |
 | `/admin/site-content` | Edit announcement bar, hero, process (4 steps), why-us (4 cards), achievements, contact details. |
 | `/admin/blog`, `/new`, `/[id]/edit` | Write, edit, publish and delete markdown posts. |
 | `/admin/success-stories` | Create, edit, delete stories. |
 | `/admin/faqs` | Create, edit, delete FAQs. |
-| `/admin/industries` | Create, edit, delete industries. The slug does not change on rename. |
+| `/admin/industries` | Create, edit, delete industries. The slug does not change on rename. An industry that jobs use can't be deleted directly; "Move jobs, then delete" moves them to another industry or to none. |
 | `/admin/testimonials` | Approve, feature, delete. **No create or edit.** |
 | `/admin/newsletter` | List and delete subscribers. |
 | `/admin/users` | List users. ADMIN can change roles. STAFF has read-only access. |
 | `/admin/settings` | Account info, change password, last 100 audit-log rows. |
 
-Admin lists show the 50 newest rows. There is no pagination.
+Admin lists show the 50 newest rows without pagination, except `/admin/applications`, which filters and paginates (25 a page). `/admin` shows a red banner for unresolved `SystemIncident` rows.
 
 ## 6. How data flows
 
@@ -206,6 +227,9 @@ Each table has one helper that lists its pages:
 | Industry | `revalidateIndustryPages()` in `features/site-content/actions.ts` | Whole layout tree (the footer lists industries) and `/sitemap.xml` |
 | FaqItem, Setting blocks | `revalidateContentPages()` in `features/site-content/actions.ts` | `/`, `/employers`, `/process`, `/why-choose-us`, `/about`, `/faq`, `/services/*` |
 | Setting: contact, announcement | inline | Whole layout tree |
+| Job | `revalidateJobPages()` in `features/jobs/cache.ts` | `/`, `/jobs`, `/jobs/*`, `/jobs/category/*`, `/industries/*`, `/sitemap.xml`, `/admin`, `/admin/jobs`, `/admin/applications` |
+| JobApplication | inline in `applyToJob` and `features/jobs/admin-actions.ts` | `/admin`, `/admin/applications`, `/admin/jobs` |
+| Department (role category) | `revalidateCategoryPages()` in `features/jobs/category-actions.ts` | `revalidateJobPages()` plus `/admin/categories` |
 
 `/sitemap.xml` is a cached route handler. Name it on its own: `revalidatePath("/sitemap.xml")`.
 
@@ -216,8 +240,10 @@ Columns typed `Json` (for example `BlogPost.tags`, `SuccessStory.results`, `Sett
 ## 7. Database
 
 - Provider: PostgreSQL (`prisma/schema.prisma`). The local `.env` points at a Neon database (region ap-southeast-1).
-- On 2026-11-07 the live Neon schema matched `schema.prisma` exactly (`prisma migrate diff` returned an empty migration).
-- The migration history does not work. See §10, issue 1.
+- On 2026-11-12 the migration history was baselined. `prisma/migrations/0_init` holds the full schema and is marked as applied on Neon.
+- Later migrations: `20261112120000_jobs_public_applications` (applied), `20261113120000_job_employer_label` (renames `Job.confidentialLabel` to `employerLabel`, drops `Job.confidential`, makes `Job.companyId` optional; hand-written so the label text is kept).
+- When `prisma migrate diff` would drop and re-add a column that holds data, write the migration by hand with `RENAME COLUMN`.
+- Schema change workflow: edit `schema.prisma`, run `npx prisma migrate diff --from-schema-datasource prisma/schema.prisma --to-schema-datamodel prisma/schema.prisma --script` into a new `prisma/migrations/<timestamp>_<name>/migration.sql`, review the SQL, then run `npx prisma migrate deploy` (this writes to the database in `DATABASE_URL`) and `npx prisma generate`.
 
 ### Tables in use
 
@@ -233,6 +259,19 @@ Columns typed `Json` (for example `BlogPost.tags`, `SuccessStory.results`, `Sett
 | `NewsletterSubscriber` | Email list. |
 | `Setting` | Key-value content blocks. |
 | `AuditLog` | One row per admin mutation. |
+| `Job` | Job posts. `employerLabel` (required, max 80) describes the hiring company publicly, e.g. "Leading private bank". The admin does not pick a client. JobPosting JSON-LD always uses `hiringOrganization.name = "confidential"`. `companyId` is optional and legacy: only jobs created before 2026-11-13 have it. |
+| `Department` | Job role categories. The first 14 came from `npm run seed:categories`. Admins add, rename and delete them in `/admin/categories` or add one from the job form. |
+| `JobApplication` | Public "Apply" submissions. Holds applicant details and resume metadata (`resumeKey` in Cloudflare R2). One row per job per email. |
+| `SystemIncident` | Failures with no signed-in user, such as a resume upload failing. Shown on `/admin` until resolved. |
+
+### Resume storage
+
+Resume files live in one private Cloudflare R2 bucket, reached through the S3 API by `src/lib/resume-storage.ts`. Object keys are `resumes/<32 hex>.<ext>`. The database row (`JobApplication.resumeKey`) is the only reference to a file.
+
+- Upload: `applyToJob` checks the bytes, writes the file, then the row. If the row write fails, it deletes the file.
+- Download: `/api/v1/resumes/[applicationId]` only, ADMIN or STAFF.
+- Delete: `deleteApplication` removes the row, then the file. A failed file delete is recorded as a `SystemIncident`.
+- Cleanup: `GET /api/cron/cleanup-resumes` (header `Authorization: Bearer <CRON_SECRET>`) closes PUBLISHED jobs past `validThrough` and deletes files older than 24 hours that no row references. `vercel.json` schedules it daily at 21:30 UTC (03:00 IST). On another host, schedule the same request. Without `CRON_SECRET` the route runs only outside production.
 
 ### Seed (`prisma/seed.ts`)
 
@@ -255,28 +294,26 @@ The seed creates:
 - Rate limits are in memory. They reset on restart and are per instance. On serverless hosting, each instance has its own counters.
 - Security headers are set in `next.config.ts`: X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy, HSTS. There is no Content-Security-Policy.
 - The blog markdown renderer (`src/features/blog/markdown.tsx`) HTML-escapes all input first and allows only `http(s)`, `/`, `#` and `mailto:` links.
+- Resumes are stored in a private Cloudflare R2 bucket (encrypted at rest by R2). They leave storage only through `/api/v1/resumes/[applicationId]`, which requires an ADMIN or STAFF session and sends the file as an attachment with `nosniff`. The server checks each upload's magic bytes before storing it (`src/lib/resumes.ts`). There is no virus scan.
 - There is no way to create a user from the UI. To add a staff member, insert a `User` row with a bcrypt hash (cost 12), then set the role in `/admin/users`.
 
 ## 9. Legacy code left from the job portal
 
 These items are unused by the current site. Remove them only as a deliberate change.
 
-- Prisma models: `CandidateProfile`, `EmployerProfile`, `Company`, `Department`, `Job`, `Application`, `Interview`, `Resume`, `SavedJob`, `ContactQuery`, `Notification`. Enums for jobs, applications and interviews.
-- `src/lib/uploads.ts` and `src/app/api/v1/files/[name]/route.ts` (resume storage and download).
-- `jobPostingJsonLd`, `formatSalaryRange`, `labelApplicationStatus`, `ApplicationStatusBadge`, `JobStatusBadge`, `InterviewStatusBadge`.
-- `departmentSchema` in `site-content/schemas.ts`. `deleteIndustry` still counts attached jobs.
+- Prisma models: `CandidateProfile`, `EmployerProfile`, `Company` (and the optional `Job.companyId` link), `Application`, `Interview`, `Resume`, `SavedJob`, `ContactQuery`, `Notification`. Enums for jobs, applications and interviews.
+- `InterviewStatusBadge` in `components/dashboard/status-badge.tsx`.
 - Content blocks with an action, a form and a query but no screen: `StatsForm`, `LogosForm`, `TeamForm`, `saveStatsContent`, `saveLogosContent`, `saveTeam`, `getClientLogos`, `getTeam`. No public page reads them.
-- Unimported components: `components/shared/stat-counter.tsx`, `components/ui/card.tsx`, `components/ui/pagination.tsx`.
+- Unimported components: `components/shared/stat-counter.tsx`.
 - `EMPLOYER` and `CANDIDATE` roles land on `/` after sign-in and have no screens.
 - Branch `production-readiness` (2026-07-31) adds email, tests, Blob storage, cron and invoices **for the old job portal**. It branched before the rebrand. Do not merge it as is.
 
 ## 10. Known issues (verified 2026-11-07)
 
-1. **Migrations are broken for Postgres.** `prisma/migrations/` holds one SQLite-dialect migration and `migration_lock.toml` says `sqlite`. `npx prisma migrate status` fails with error P3019. `prisma migrate deploy` will also fail. To fix: baseline a new Postgres migration from the current schema and mark it applied on Neon (`prisma migrate resolve --applied`). Do this before any schema change.
-2. **Forgot password does nothing.** `requestPasswordReset` returns success but sends no email and stores no token. The only way to reset a password is the change-password form while signed in, or a direct database update.
-3. **Testimonials cannot be created or edited in the admin.** The seed text says "replace from the admin panel", but there is no screen for it.
-4. **No deployment configuration in the repo.** There is no `vercel.json` and no `.vercel/` folder. `docs/07-deployment-guide.md` refers to the old portal and to the `production-readiness` branch. The current deployment state is not recorded in the repo.
-5. **Prisma warns** that `package.json#prisma` (the seed command) is deprecated and will be removed in Prisma 7.
+1. **Forgot password does nothing.** `requestPasswordReset` returns success but sends no email and stores no token. The only way to reset a password is the change-password form while signed in, or a direct database update.
+2. **Testimonials cannot be created or edited in the admin.** The seed text says "replace from the admin panel", but there is no screen for it.
+3. **Deployment state is not recorded in the repo.** `vercel.json` holds only the cron schedule. There is no `.vercel/` folder. `docs/07-deployment-guide.md` refers to the old portal and to the `production-readiness` branch. Hosting is undecided: Vercel's Hobby plan is restricted to non-commercial personal use.
+4. **Prisma warns** that `package.json#prisma` (the seed command) is deprecated and will be removed in Prisma 7.
 
 ## 11. Environment variables
 
@@ -286,6 +323,10 @@ These items are unused by the current site. Remove them only as a deliberate cha
 | `AUTH_SECRET` | NextAuth | Long random string. Different per environment. |
 | `AUTH_TRUST_HOST` | NextAuth | `true` behind a proxy such as Vercel. |
 | `NEXT_PUBLIC_SITE_URL` | `siteConfig.url` | Used for canonical URLs, sitemap, JSON-LD and `metadataBase`. Fallback `http://localhost:3000`. |
+| `R2_ACCOUNT_ID` | `src/lib/resume-storage.ts` | Cloudflare account ID. Forms the endpoint `https://<id>.r2.cloudflarestorage.com`. |
+| `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | `src/lib/resume-storage.ts` | An R2 API token with "Object Read & Write" on the one bucket. |
+| `R2_BUCKET` | `src/lib/resume-storage.ts` | Bucket name. Public access must stay off. |
+| `CRON_SECRET` | `/api/cron/cleanup-resumes` | Bearer token the scheduler sends. Required in production. |
 | `ADMIN_EMAIL` | `prisma/seed.ts` only | Admin login created by the seed. |
 | `ADMIN_PASSWORD` | `prisma/seed.ts` only | If empty, the seed uses `Password@123`. |
 
@@ -310,4 +351,6 @@ These items are unused by the current site. Remove them only as a deliberate cha
 | Colors, radii, shadows, fonts | `src/app/globals.css` (`:root`, `.dark`, `@theme inline`) |
 | Legal text | `src/app/(site)/privacy-policy/page.tsx`, `src/app/(site)/terms/page.tsx` |
 | Admin sidebar | `src/config/dashboard-nav.ts` |
+| Apply form fields and rules | `src/features/jobs/schemas.ts` (rules), `src/features/jobs/options.ts` (city suggestions and old-name map, qualification and notice-period lists, age limits). The city is free text: `normalizeCity` tidies it and maps old names (Bombay → Mumbai), `src/features/jobs/apply-form.tsx` (layout) |
+| Resume size and types | `src/lib/resumes.ts`; the body limit in `next.config.ts` must stay above it |
 | Social icons | Shown as "coming soon" placeholders in `site-footer.tsx` and `contact/page.tsx`. The `social` URLs in the contact setting are stored but not rendered as links. |

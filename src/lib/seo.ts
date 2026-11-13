@@ -1,6 +1,6 @@
 import { siteConfig } from "@/config/site";
 import { jsonArray } from "@/lib/utils";
-import type { Job, Company, Department } from "@prisma/client";
+import type { Job, Department, Industry } from "@prisma/client";
 
 const employmentTypeMap: Record<string, string> = {
   FULL_TIME: "FULL_TIME",
@@ -65,7 +65,12 @@ export function breadcrumbJsonLd(items: { label: string; href?: string }[]) {
   };
 }
 
-export function jobPostingJsonLd(job: Job & { company: Company; department: Department }) {
+/**
+ * Google JobPosting markup. Render it only on an open job's detail page.
+ * The client is never named on the site, so the hiring organisation is always the literal
+ * name "confidential", as Google's guidelines require for a confidential employer.
+ */
+export function jobPostingJsonLd(job: Job & { department: Department; industry: Industry | null }) {
   return {
     "@context": "https://schema.org",
     "@type": "JobPosting",
@@ -74,11 +79,7 @@ export function jobPostingJsonLd(job: Job & { company: Company; department: Depa
     datePosted: (job.publishedAt ?? job.createdAt).toISOString(),
     ...(job.validThrough ? { validThrough: job.validThrough.toISOString() } : {}),
     employmentType: employmentTypeMap[job.employmentType] ?? "FULL_TIME",
-    hiringOrganization: {
-      "@type": "Organization",
-      name: job.company.name,
-      ...(job.company.website ? { sameAs: job.company.website } : {}),
-    },
+    hiringOrganization: { "@type": "Organization", name: "confidential" },
     jobLocation: {
       "@type": "Place",
       address: { "@type": "PostalAddress", addressLocality: job.location, addressCountry: "IN" },
@@ -98,7 +99,7 @@ export function jobPostingJsonLd(job: Job & { company: Company; department: Depa
       monthsOfExperience: job.experienceMin * 12,
     },
     skills: jsonArray(job.skills).join(", "),
-    industry: job.department.name,
+    industry: job.industry?.name ?? job.department.name,
     directApply: true,
   };
 }
