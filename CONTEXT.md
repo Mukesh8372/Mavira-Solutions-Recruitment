@@ -312,7 +312,7 @@ These items are unused by the current site. Remove them only as a deliberate cha
 
 1. **Forgot password does nothing.** `requestPasswordReset` returns success but sends no email and stores no token. The only way to reset a password is the change-password form while signed in, or a direct database update.
 2. **Testimonials cannot be created or edited in the admin.** The seed text says "replace from the admin panel", but there is no screen for it.
-3. **Deployment state is not recorded in the repo.** `vercel.json` holds only the cron schedule. There is no `.vercel/` folder. `docs/07-deployment-guide.md` refers to the old portal and to the `production-readiness` branch. Hosting is undecided: Vercel's Hobby plan is restricted to non-commercial personal use.
+3. **Production deploys depend on the repository owner.** Vercel builds production from `main` of the `mavira` repository, in a Hobby project owned by the Mukesh8372 account (see §12). On Hobby, Vercel deploys a Git push only when the commit author is the account owner, unless the repository is public. Pushes authored by anyone else show "Deployment was blocked". Vercel's Hobby plan is also restricted to non-commercial personal use. `docs/07-deployment-guide.md` refers to the old portal and to the `production-readiness` branch.
 4. **Prisma warns** that `package.json#prisma` (the seed command) is deprecated and will be removed in Prisma 7.
 
 ## 11. Environment variables
@@ -337,7 +337,9 @@ These items are unused by the current site. Remove them only as a deliberate cha
 - Default branch: `main`.
 - `origin` = `github.com/Vivekg1306/talentbridge`.
 - `mavira` = `github.com/Mukesh8372/Mavira-Solutions-Recruitment`.
-- On 2026-11-07, `main`, `origin/main` and `mavira/main` were the same commit.
+- Production: Vercel project `mavira-solutions-recruitment` (Hobby, owned by the Mukesh8372 account) deploys `main` of `mavira`. `origin` has no Vercel project. Checked on 2026-11-13 from GitHub's deployment records.
+- To release: push `main` to `mavira`. On a private repository the push deploys only if the latest commit is authored by the Vercel account owner (§10, item 3). Release history: `ebbd83b` (2026-08-05, first deploy), `8aa488a` (2026-11-13, blocked), job board release on 2026-11-13 while the repository was public.
+- Vercel needs every variable in §11 except `ADMIN_EMAIL` and `ADMIN_PASSWORD`. Variables apply only to deployments made after they are added.
 
 ## 13. Where to change common things
 
