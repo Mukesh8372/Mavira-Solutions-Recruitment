@@ -6,7 +6,8 @@ import { requireRole } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { shortId, slugify } from "@/lib/utils";
-import { deleteResumeQuietly } from "@/lib/resume-storage";
+import { StorageError, deleteResume, deleteResumeQuietly } from "@/lib/resume-storage";
+import { recordIncident } from "@/lib/incidents";
 import { revalidateJobPages } from "@/features/jobs/cache";
 import {
   adminNoteSchema,
@@ -155,6 +156,59 @@ export async function updateJobFlags(id: string, flags: { featured?: boolean; ur
   await audit(session.user.id, "job.flags", "Job", id, { from: { featured: job.featured, urgent: job.urgent }, to: data });
   revalidateJobPages();
   return { ok: true, message: "Job updated" };
+}
+
+/**
+ * Permanently deletes an ARCHIVED job, every application to it and their resume files.
+ * Only archived jobs qualify, so a live job can't be deleted by mistake.
+ * The audit row holds the job title and counts, never applicant data.
+ */
+export async function deleteJob(id: string): Promise<AdminJobResult> {
+  const session = await requireStaff();
+  if (!session) return notStaff;
+  const job = await prisma.job.findUnique({
+    where: { id },
+    select: { id: true, title: true, slug: true, status: true, publicApplications: { select: { resumeKey: true } } },
+  });
+  if (!job) return { ok: false, error: "Job not found. It may already be deleted." };
+  if (job.status !== "ARCHIVED") return { ok: false, error: "Only archived jobs can be deleted. Archive the job first." };
+
+  const keys = job.publicApplications.map((a) => a.resumeKey);
+  // Deleting the job removes its applications in the same statement (ON DELETE CASCADE).
+  await prisma.job.delete({ where: { id } });
+
+  // Then the files. A file that fails stays in the bucket with no row pointing at it,
+  // so the daily cleanup job deletes it later. One incident covers all failures.
+  const failed: string[] = [];
+  let firstError: string | undefined;
+  for (let i = 0; i < keys.length; i += 10) {
+    const batch = keys.slice(i, i + 10);
+    const results = await Promise.allSettled(batch.map((key) => deleteResume(key)));
+    results.forEach((r, j) => {
+      if (r.status === "rejected") {
+        failed.push(batch[j]);
+        firstError ??= r.reason instanceof StorageError ? r.reason.message : "Resume storage delete failed";
+      }
+    });
+  }
+  if (failed.length > 0) {
+    console.error("[deleteJob] resume delete failed", failed.length, "file(s)", firstError);
+    await recordIncident(
+      "resume.delete",
+      `${failed.length} resume file(s) of a deleted job could not be deleted from storage. The daily cleanup job removes them after 24 hours.`,
+      { jobId: id, failedCount: failed.length, firstKey: failed[0], error: firstError }
+    );
+  }
+
+  await audit(session.user.id, "job.delete", "Job", id, {
+    title: job.title,
+    slug: job.slug,
+    applicationsDeleted: keys.length,
+    filesNotDeleted: failed.length,
+  });
+  revalidateJobPages();
+  const n = keys.length;
+  return { ok: true, message: `Job deleted with ${n} application${n === 1 ? "" : "s"}` };
 }
 
 /* ---------------------------------------------------------- Applications */

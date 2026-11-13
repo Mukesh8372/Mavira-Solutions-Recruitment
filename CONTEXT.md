@@ -177,7 +177,7 @@ The blog categories are fixed in `src/features/blog/queries.ts`: `career-advice`
 |---|---|
 | `/admin` | Counts and the 8 latest leads. |
 | `/admin/leads` | Lead list, filter by status (`?status=new`), change status. |
-| `/admin/jobs`, `/new`, `/[id]/edit` | Post, edit, publish, close, reopen, archive jobs; featured/urgent flags; application counts. Status moves follow `JOB_STATUS_TRANSITIONS` in `features/jobs/admin-schemas.ts`. The form can add a role category or an industry without leaving the page. |
+| `/admin/jobs`, `/new`, `/[id]/edit` | Post, edit, publish, close, reopen, archive jobs; featured/urgent flags; application counts. Status moves follow `JOB_STATUS_TRANSITIONS` in `features/jobs/admin-schemas.ts`. The form can add a role category or an industry without leaving the page. Archived jobs are kept until an admin clicks **Delete** (shown on archived jobs only), which removes the job, its applications and their resume files after a confirm step. Nothing deletes jobs automatically. |
 | `/admin/categories` | Add, rename and delete role categories (`Department`). A category that jobs use (any status) can't be deleted; "Move jobs, then delete" moves them to another category in one transaction. The slug follows a rename only while no job uses the category. |
 | `/admin/applications` | Applicant list with URL filters (`job`, `category`, `status`, `ageMin`/`ageMax`, `expMin`/`expMax`, `ctcMin`/`ctcMax`, `city`, `qualification`, `notice`, `from`/`to`, `q`, `sort`, `page`), 25 a page. The city list shows the cities applicants entered, with counts. Download resume, change status, internal note, delete. |
 | `/admin/site-content` | Edit announcement bar, hero, process (4 steps), why-us (4 cards), achievements, contact details. |
@@ -271,6 +271,7 @@ Resume files live in one private Cloudflare R2 bucket, reached through the S3 AP
 - Upload: `applyToJob` checks the bytes, writes the file, then the row. If the row write fails, it deletes the file.
 - Download: `/api/v1/resumes/[applicationId]` only, ADMIN or STAFF.
 - Delete: `deleteApplication` removes the row, then the file. A failed file delete is recorded as a `SystemIncident`.
+- Job delete: `deleteJob` (archived jobs only) deletes the job row, which removes its applications in the same statement (ON DELETE CASCADE), then the files in batches of 10. Failed file deletes are recorded as one `SystemIncident`; the cleanup job removes those files after 24 hours.
 - Cleanup: `GET /api/cron/cleanup-resumes` (header `Authorization: Bearer <CRON_SECRET>`) closes PUBLISHED jobs past `validThrough` and deletes files older than 24 hours that no row references. `vercel.json` schedules it daily at 21:30 UTC (03:00 IST). On another host, schedule the same request. Without `CRON_SECRET` the route runs only outside production.
 
 ### Seed (`prisma/seed.ts`)

@@ -7,7 +7,7 @@ import { JobStatusBadge } from "@/components/dashboard/status-badge";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { TableShell, Table, THead, TH, TBody, TR, TD } from "@/components/dashboard/data-table";
 import { FilterTabs } from "@/features/admin/filter-tabs";
-import { JobFlagToggles, JobStatusButtons } from "@/features/jobs/job-admin-actions";
+import { DeleteJobButton, JobFlagToggles, JobStatusButtons } from "@/features/jobs/job-admin-actions";
 import { getAdminJobs } from "@/features/admin/queries";
 import { isJobOpen } from "@/features/jobs/display";
 import { formatDate, formatRelativeDate } from "@/lib/format";
@@ -99,6 +99,9 @@ export default async function AdminJobsPage(props: { searchParams: Promise<{ sta
                           Edit
                         </Link>
                         <JobStatusButtons jobId={job.id} status={job.status} />
+                        {job.status === "ARCHIVED" && (
+                          <DeleteJobButton jobId={job.id} title={job.title} applicationCount={job._count.publicApplications} />
+                        )}
                         {job.status !== "DRAFT" && job.status !== "ARCHIVED" && (
                           <Link href={`/jobs/${job.slug}`} className="text-[13px] font-semibold text-body hover:underline" target="_blank">
                             View

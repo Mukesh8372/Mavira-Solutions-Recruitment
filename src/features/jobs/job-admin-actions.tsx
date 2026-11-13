@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Star, Zap } from "lucide-react";
 import { toast } from "sonner";
 import type { JobStatus } from "@prisma/client";
-import { setJobStatus, updateJobFlags } from "@/features/jobs/admin-actions";
+import { deleteJob, setJobStatus, updateJobFlags } from "@/features/jobs/admin-actions";
 import { JOB_STATUS_TRANSITIONS } from "@/features/jobs/admin-schemas";
 import { cn } from "@/lib/utils";
 
@@ -87,6 +87,58 @@ export function JobStatusButtons({ jobId, status }: { jobId: string; status: Job
           {status === "CLOSED" && next === "PUBLISHED" ? "Reopen" : labels[next].verb}
         </button>
       ))}
+    </span>
+  );
+}
+
+/**
+ * Permanent delete for an archived job. The confirm step states what goes with it:
+ * every application and its resume file.
+ */
+export function DeleteJobButton({ jobId, title, applicationCount }: { jobId: string; title: string; applicationCount: number }) {
+  const [confirming, setConfirming] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const router = useRouter();
+  const n = applicationCount;
+
+  if (!confirming) {
+    return (
+      <button type="button" onClick={() => setConfirming(true)} className="text-[13px] font-semibold text-destructive transition-colors hover:underline">
+        Delete
+      </button>
+    );
+  }
+
+  return (
+    <span role="alertdialog" aria-label={`Delete ${title}`} className="inline-flex max-w-xs flex-col items-end gap-1.5 text-right text-[12.5px]">
+      <span className="text-body">
+        Delete &quot;{title}&quot;
+        {n > 0 ? ` and its ${n} application${n === 1 ? "" : "s"} with resume${n === 1 ? "" : "s"}` : ""}? This can&apos;t be undone.
+      </span>
+      <span className="inline-flex items-center gap-3">
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() =>
+            startTransition(async () => {
+              const res = await deleteJob(jobId);
+              if (res.ok) {
+                toast.success(res.message ?? "Job deleted");
+                router.refresh();
+              } else {
+                toast.error(res.error);
+                setConfirming(false);
+              }
+            })
+          }
+          className="font-semibold text-destructive hover:underline disabled:opacity-50"
+        >
+          {pending ? "Deleting…" : "Delete permanently"}
+        </button>
+        <button type="button" disabled={pending} onClick={() => setConfirming(false)} className="font-semibold text-body hover:underline">
+          Cancel
+        </button>
+      </span>
     </span>
   );
 }
