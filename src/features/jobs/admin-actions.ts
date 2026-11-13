@@ -12,7 +12,6 @@ import {
   adminNoteSchema,
   applicationStatusSchema,
   canTransitionJob,
-  clientSchema,
   istDayEnd,
   jobSchema,
   jobStatusSchema,
@@ -32,12 +31,6 @@ function firstIssue(error: { issues: { message: string; path: PropertyKey[] }[] 
 }
 
 const lpaToInr = (lpa: number | undefined) => (lpa === undefined ? null : Math.round(lpa * 100_000));
-
-async function uniqueCompanySlug(name: string) {
-  const base = slugify(name) || "client";
-  const clash = await prisma.company.findUnique({ where: { slug: base } });
-  return clash ? `${base.slice(0, 55)}-${shortId()}` : base;
-}
 
 /* ------------------------------------------------------------------ Jobs */
 
@@ -73,8 +66,7 @@ export async function saveJob(input: unknown, id?: string): Promise<AdminJobResu
     title: d.title,
     departmentId: d.departmentId,
     industryId: d.industryId ?? null,
-    confidential: d.confidential,
-    confidentialLabel: d.confidential ? (d.confidentialLabel ?? null) : null,
+    employerLabel: d.employerLabel,
     location: d.location,
     workMode: d.workMode,
     employmentType: d.employmentType,
@@ -97,23 +89,11 @@ export async function saveJob(input: unknown, id?: string): Promise<AdminJobResu
   };
 
   const jobId = await prisma.$transaction(async (tx) => {
-    let companyId = d.companyId;
-    if (!companyId) {
-      const created = await tx.company.create({
-        data: { name: d.newCompanyName!, slug: await uniqueCompanySlug(d.newCompanyName!), website: d.newCompanyWebsite ?? null },
-      });
-      companyId = created.id;
-    } else {
-      const company = await tx.company.findUnique({ where: { id: companyId }, select: { id: true } });
-      if (!company) throw new Error("CLIENT_NOT_FOUND");
-    }
-
     if (existing) {
       await tx.job.update({
         where: { id: existing.id },
         data: {
           ...data,
-          companyId,
           // Set on the first publish only; the slug never changes on edit.
           publishedAt: status === "PUBLISHED" ? (existing.publishedAt ?? now) : existing.publishedAt,
         },
@@ -125,16 +105,12 @@ export async function saveJob(input: unknown, id?: string): Promise<AdminJobResu
     if (!slug) slug = `job-${shortId(6)}`;
     if (await tx.job.findUnique({ where: { slug } })) slug = `${slug.slice(0, 55)}-${shortId()}`;
     const created = await tx.job.create({
-      data: { ...data, companyId, slug, postedById: session.user.id, publishedAt: status === "PUBLISHED" ? now : null },
+      data: { ...data, slug, postedById: session.user.id, publishedAt: status === "PUBLISHED" ? now : null },
     });
     return created.id;
-  }).catch((err: unknown) => {
-    if (err instanceof Error && err.message === "CLIENT_NOT_FOUND") return null;
-    throw err;
   });
-  if (!jobId) return { ok: false, error: "That client no longer exists.", field: "companyId" };
 
-  await audit(session.user.id, existing ? "job.update" : "job.create", "Job", jobId, { status, confidential: d.confidential });
+  await audit(session.user.id, existing ? "job.update" : "job.create", "Job", jobId, { status });
   revalidateJobPages();
   return { ok: true, id: jobId, message: existing ? "Job saved" : status === "PUBLISHED" ? "Job published" : "Job saved as draft" };
 }
@@ -242,45 +218,6 @@ export async function deleteApplication(id: string): Promise<AdminJobResult> {
   await audit(session.user.id, "application.delete", "JobApplication", id, { jobId: application.jobId });
   revalidateApplicationPages();
   return { ok: true, message: "Application deleted" };
-}
-
-/* ---------------------------------------------------------------- Clients */
-
-export async function saveClient(input: unknown, id?: string): Promise<AdminJobResult> {
-  const session = await requireStaff();
-  if (!session) return notStaff;
-  const parsed = clientSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, ...firstIssue(parsed.error) };
-  const d = parsed.data;
-  const data = { name: d.name, website: d.website ?? null, industry: d.industry ?? null, size: d.size ?? null, about: d.about ?? null };
-
-  if (id) {
-    const existing = await prisma.company.findUnique({ where: { id }, select: { id: true } });
-    if (!existing) return { ok: false, error: "Client not found." };
-    // The slug stays stable on rename.
-    await prisma.company.update({ where: { id }, data });
-    await audit(session.user.id, "client.update", "Company", id);
-  } else {
-    const created = await prisma.company.create({ data: { ...data, slug: await uniqueCompanySlug(d.name) } });
-    await audit(session.user.id, "client.create", "Company", created.id);
-  }
-  revalidatePath("/admin/clients");
-  revalidateJobPages(); // job cards show the client name
-  return { ok: true, message: id ? "Client updated" : "Client added" };
-}
-
-export async function deleteClient(id: string): Promise<AdminJobResult> {
-  const session = await requireStaff();
-  if (!session) return notStaff;
-  const client = await prisma.company.findUnique({ where: { id }, include: { _count: { select: { jobs: true } } } });
-  if (!client) return { ok: false, error: "Client not found." };
-  if (client._count.jobs > 0) {
-    return { ok: false, error: `"${client.name}" has ${client._count.jobs} job(s) attached. Move or archive them first.` };
-  }
-  await prisma.company.delete({ where: { id } });
-  await audit(session.user.id, "client.delete", "Company", id, { name: client.name });
-  revalidatePath("/admin/clients");
-  return { ok: true, message: "Client deleted" };
 }
 
 /* -------------------------------------------------------------- Incidents */

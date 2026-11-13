@@ -61,24 +61,23 @@ export async function getAdminOverview() {
 export async function getAdminJobs(status?: JobStatus) {
   return prisma.job.findMany({
     where: status ? { status } : undefined,
-    include: { company: true, department: true, _count: { select: { publicApplications: true } } },
+    include: { department: true, _count: { select: { publicApplications: true } } },
     orderBy: { updatedAt: "desc" },
     take: PAGE_SIZE,
   });
 }
 
 export async function getAdminJob(id: string) {
-  return prisma.job.findUnique({ where: { id }, include: { company: true, department: true } });
+  return prisma.job.findUnique({ where: { id }, include: { department: true } });
 }
 
 /** Dropdown data for the job form. */
 export async function getJobOptions() {
-  const [departments, industries, clients] = await Promise.all([
+  const [departments, industries] = await Promise.all([
     prisma.department.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
     prisma.industry.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
-    prisma.company.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
-  return { departments, industries, clients };
+  return { departments, industries };
 }
 
 /** Jobs with at least one application, for the applications filter. */
@@ -107,7 +106,7 @@ export async function getAdminApplications(f: ApplicantFilters) {
   if (f.expMax !== undefined) and.push({ experienceYears: { lte: f.expMax } });
   if (f.ctcMin !== undefined) and.push({ expectedCtcLpa: { gte: f.ctcMin } });
   if (f.ctcMax !== undefined) and.push({ expectedCtcLpa: { lte: f.ctcMax } });
-  if (f.city) and.push({ currentCity: f.city });
+  if (f.city) and.push({ currentCity: { equals: f.city, mode: "insensitive" } });
   if (f.qualification) and.push({ qualification: f.qualification });
   if (f.notice !== undefined) and.push({ noticePeriodDays: f.notice });
   const from = f.from ? istDayStart(f.from) : null;
@@ -145,20 +144,42 @@ export async function getAdminApplications(f: ApplicantFilters) {
     skip: (page - 1) * APPLICATIONS_PER_PAGE,
     take: APPLICATIONS_PER_PAGE,
     include: {
-      job: { select: { id: true, title: true, slug: true, location: true, confidential: true, confidentialLabel: true, company: { select: { name: true } }, department: { select: { name: true } } } },
+      job: { select: { id: true, title: true, slug: true, location: true, employerLabel: true, department: { select: { name: true } } } },
     },
   });
   return { rows, total, page, pages };
 }
 
-/* ---------------------------------------------------------------- Clients */
-
-export async function getAdminClients() {
-  return prisma.company.findMany({
-    include: { _count: { select: { jobs: true } } },
-    orderBy: { name: "asc" },
-    take: 200,
+/** Cities applicants entered, with counts, for the applications city filter. */
+export async function getApplicantCities() {
+  const rows = await prisma.jobApplication.groupBy({
+    by: ["currentCity"],
+    _count: { _all: true },
+    orderBy: { currentCity: "asc" },
   });
+  return rows.map((r) => ({ city: r.currentCity, count: r._count._all }));
+}
+
+/* ------------------------------------------------------ Role categories */
+
+/** Every category with its job counts. `jobs` counts every status, so it decides whether delete is allowed. */
+export async function getAdminCategories() {
+  const now = new Date();
+  const rows = await prisma.department.findMany({
+    orderBy: { name: "asc" },
+    include: {
+      _count: {
+        select: {
+          jobs: true,
+        },
+      },
+      jobs: {
+        where: { status: "PUBLISHED", OR: [{ validThrough: null }, { validThrough: { gt: now } }] },
+        select: { id: true },
+      },
+    },
+  });
+  return rows.map((d) => ({ id: d.id, name: d.name, slug: d.slug, jobCount: d._count.jobs, openJobCount: d.jobs.length }));
 }
 
 /* -------------------------------------------------------------- Incidents */

@@ -10,7 +10,7 @@ import { applySchema } from "@/features/jobs/schemas";
 import {
   AGE_MAX,
   AGE_MIN,
-  INDIAN_CITIES,
+  CITY_SUGGESTIONS,
   NOTICE_PERIODS,
   QUALIFICATIONS,
   dateOfBirthForAge,
@@ -235,14 +235,14 @@ export function ApplyForm({ jobId, jobTitle, contactEmail }: { jobId: string; jo
         </Field>
         <Field id="apply-city" label="Current city" error={fieldError("currentCity")}>
           {(p) => (
-            <Select {...p} {...register("currentCity")}>
-              <option value="">Select</option>
-              {INDIAN_CITIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </Select>
+            <>
+              <Input {...p} list="apply-city-list" maxLength={60} autoComplete="address-level2" placeholder="Start typing, e.g. Thane" {...register("currentCity")} />
+              <datalist id="apply-city-list">
+                {CITY_SUGGESTIONS.map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
+            </>
           )}
         </Field>
       </div>

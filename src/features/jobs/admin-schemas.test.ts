@@ -1,15 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { canTransitionJob, clientSchema, istDateOnly, istDayEnd, istDayStart, istToday, jobSchema } from "@/features/jobs/admin-schemas";
+import { canTransitionJob, categoryKey, categoryNameSchema, istDateOnly, istDayEnd, istDayStart, istToday, jobSchema } from "@/features/jobs/admin-schemas";
 
 const valid = {
   title: "Relationship Manager",
   departmentId: "dep_1",
   industryId: "",
-  companyId: "comp_1",
-  newCompanyName: "",
-  newCompanyWebsite: "",
-  confidential: false,
-  confidentialLabel: "",
+  employerLabel: "Leading private bank",
   location: "Thane",
   workMode: "ONSITE",
   employmentType: "FULL_TIME",
@@ -48,14 +44,13 @@ describe("jobSchema", () => {
     expect(r.data.skills).toEqual(["CASA", "Wealth Management"]);
     expect(r.data.validThrough).toBeUndefined();
   });
-  it("requires exactly one client source", () => {
-    expect(firstError({ ...valid, companyId: "" })).toBe("companyId: Choose a client or enter a new client name");
-    expect(firstError({ ...valid, newCompanyName: "New Co" })).toMatch(/not both/);
-    expect(firstError({ ...valid, companyId: "", newCompanyName: "New Co" })).toBeNull();
-  });
-  it("requires a label when confidential", () => {
-    expect(firstError({ ...valid, confidential: true })).toMatch(/confidentialLabel/);
-    expect(firstError({ ...valid, confidential: true, confidentialLabel: "Leading private bank" })).toBeNull();
+  it("requires the hiring company label", () => {
+    expect(firstError({ ...valid, employerLabel: "" })).toMatch(/^employerLabel: Describe the hiring company/);
+    expect(firstError({ ...valid, employerLabel: "   " })).toMatch(/^employerLabel:/);
+    expect(firstError({ ...valid, employerLabel: "x".repeat(81) })).toBe("employerLabel: Keep it under 80 characters");
+    expect(firstError({ ...valid, employerLabel: "  Top broking house  " })).toBeNull();
+    const r = jobSchema.safeParse({ ...valid, employerLabel: "  Top broking house  " });
+    expect(r.success && r.data.employerLabel).toBe("Top broking house");
   });
   it("checks ranges", () => {
     expect(firstError({ ...valid, experienceMax: "1" })).toBe("experienceMax: Max experience can't be below min");
@@ -95,11 +90,30 @@ describe("job status transitions", () => {
   });
 });
 
-describe("clientSchema", () => {
-  it("validates the website and blanks optional fields", () => {
-    const r = clientSchema.safeParse({ name: "Kotak Securities", website: "", industry: "", size: "", about: "" });
-    expect(r.success).toBe(true);
-    if (r.success) expect(r.data.website).toBeUndefined();
-    expect(clientSchema.safeParse({ name: "X", website: "notaurl" }).success).toBe(false);
+describe("categoryNameSchema", () => {
+  const name = (value: unknown) => {
+    const r = categoryNameSchema.safeParse(value);
+    return r.success ? r.data : r.error.issues[0]?.message;
+  };
+  it("tidies spaces", () => {
+    expect(name("  Treasury   Operations ")).toBe("Treasury Operations");
+    expect(name("Sales & Business Development")).toBe("Sales & Business Development");
+    expect(name("Credit (Retail)")).toBe("Credit (Retail)");
+  });
+  it("rejects short, long and odd names", () => {
+    expect(name("A")).toBe("Enter at least 2 characters");
+    expect(name("   ")).toBe("Enter at least 2 characters");
+    expect(name("x".repeat(49))).toBe("Keep the name under 48 characters");
+    expect(name("Sales <b>")).toMatch(/^Use letters, numbers/);
+    expect(name("123")).toBe("The name needs at least one letter");
+  });
+});
+
+describe("categoryKey", () => {
+  it("treats case, spacing, punctuation and & vs and as the same", () => {
+    expect(categoryKey("Sales & Business Development")).toBe(categoryKey("sales  and business development"));
+    expect(categoryKey("Compliance & Risk")).toBe(categoryKey("compliance-and-risk"));
+    expect(categoryKey("Credit (Retail)")).toBe(categoryKey("credit retail"));
+    expect(categoryKey("Operations")).not.toBe(categoryKey("Operation"));
   });
 });

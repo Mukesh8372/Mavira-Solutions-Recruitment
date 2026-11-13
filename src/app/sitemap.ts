@@ -41,7 +41,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     prisma.industry.findMany({ select: { slug: true } }),
     prisma.successStory.findMany({ where: { status: "PUBLISHED" }, select: { slug: true, createdAt: true } }),
     prisma.job.findMany({ where: openJobWhere(), select: { slug: true, updatedAt: true } }),
-    prisma.department.findMany({ select: { slug: true } }),
+    // Only categories with an open job. An empty category page has nothing for search engines.
+    prisma.department.findMany({ where: { jobs: { some: openJobWhere() } }, select: { slug: true } }),
   ]);
 
   return [

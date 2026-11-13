@@ -3,12 +3,14 @@ import {
   AGE_MAX,
   AGE_MIN,
   CTC_MAX_LPA,
+  CITY_MAX_LENGTH,
+  CITY_RE,
   EXPERIENCE_MAX,
-  INDIAN_CITIES,
   NOTICE_PERIODS,
   QUALIFICATIONS,
   SKILLS_MAX,
   ageOn,
+  normalizeCity,
   parseDateOnly,
 } from "@/features/jobs/options";
 
@@ -101,7 +103,16 @@ export const applySchema = z.object({
       return date;
     }),
   qualification: z.enum(QUALIFICATIONS, { message: "Choose your highest qualification" }),
-  currentCity: z.enum(INDIAN_CITIES, { message: "Choose your current city" }),
+  currentCity: z
+    .string({ message: "Enter your current city" })
+    .transform(normalizeCity)
+    .pipe(
+      z
+        .string()
+        .min(2, "Enter your current city")
+        .max(CITY_MAX_LENGTH, `Keep the city under ${CITY_MAX_LENGTH} characters`)
+        .regex(CITY_RE, "Use letters only for the city, e.g. Thane")
+    ),
   currentCompany: optionalText(80),
   currentDesignation: optionalText(80),
   experienceYears: z.preprocess(

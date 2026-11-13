@@ -10,8 +10,7 @@ import { ApplicantFilterBar } from "@/features/jobs/applicant-filter-bar";
 import { ApplicationNoteEditor, ApplicationStatusSelect, DeleteApplicationButton } from "@/features/jobs/application-admin-actions";
 import { APPLICATIONS_PER_PAGE, applicantsHref, parseApplicantFilters } from "@/features/jobs/applicant-filters";
 import { ageOn, noticePeriodLabel } from "@/features/jobs/options";
-import { clientLabel } from "@/features/jobs/display";
-import { getAdminApplications, getApplicationJobOptions } from "@/features/admin/queries";
+import { getAdminApplications, getApplicantCities, getApplicationJobOptions } from "@/features/admin/queries";
 import { getDepartments } from "@/features/jobs/queries";
 import { formatDateTime } from "@/lib/format";
 import { jsonArray } from "@/lib/utils";
@@ -22,7 +21,12 @@ type SearchParams = Record<string, string | string[] | undefined>;
 
 export default async function AdminApplicationsPage(props: { searchParams: Promise<SearchParams> }) {
   const filters = parseApplicantFilters(await props.searchParams);
-  const [{ rows, total, page, pages }, jobs, departments] = await Promise.all([getAdminApplications(filters), getApplicationJobOptions(), getDepartments()]);
+  const [{ rows, total, page, pages }, jobs, departments, cities] = await Promise.all([
+    getAdminApplications(filters),
+    getApplicationJobOptions(),
+    getDepartments(),
+    getApplicantCities(),
+  ]);
   const today = new Date();
   const from = total === 0 ? 0 : (page - 1) * APPLICATIONS_PER_PAGE + 1;
   const to = Math.min(page * APPLICATIONS_PER_PAGE, total);
@@ -30,7 +34,7 @@ export default async function AdminApplicationsPage(props: { searchParams: Promi
   return (
     <>
       <PageHeader title="Applications" description="Every application from the website. Filter, screen, download resumes and move candidates through the pipeline." />
-      <ApplicantFilterBar filters={filters} jobs={jobs} categories={departments.map((d) => ({ id: d.id, name: d.name }))} />
+      <ApplicantFilterBar filters={filters} jobs={jobs} categories={departments.map((d) => ({ id: d.id, name: d.name }))} cities={cities} />
 
       <p className="mb-3 text-[13.5px] text-faint" aria-live="polite">
         {total === 0 ? "No applications match" : `Showing ${from}–${to} of ${total} application${total === 1 ? "" : "s"}`}
@@ -134,7 +138,7 @@ export default async function AdminApplicationsPage(props: { searchParams: Promi
                         {a.job.title}
                       </Link>
                       <span className="block text-[12px] text-faint">
-                        {clientLabel(a.job)} · {a.job.department.name}
+                        {a.job.employerLabel} · {a.job.department.name}
                       </span>
                     </TD>
                     <TD className="align-top">

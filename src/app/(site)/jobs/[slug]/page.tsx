@@ -25,7 +25,7 @@ import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { JsonLd } from "@/components/shared/json-ld";
-import { clientLabel, isJobOpen } from "@/features/jobs/display";
+import { isJobOpen } from "@/features/jobs/display";
 import { getJobBySlug, getRelatedJobs } from "@/features/jobs/queries";
 import { JobCard } from "@/features/jobs/job-card";
 import { ApplyForm } from "@/features/jobs/apply-form";
@@ -94,7 +94,7 @@ export default async function JobDetailPage(props: { params: Promise<{ slug: str
 
   const open = isJobOpen(job);
   const related = await getRelatedJobs(job);
-  const employer = clientLabel(job);
+  const employer = job.employerLabel;
 
   const salary = job.salaryVisible ? formatSalaryRange(job.salaryMin, job.salaryMax) : null;
   const responsibilities = jsonArray(job.responsibilities);
@@ -151,7 +151,6 @@ export default async function JobDetailPage(props: { params: Promise<{ slug: str
                 <Badge variant="purple">{labelWorkMode(job.workMode)}</Badge>
                 <Badge variant="green">{formatExperience(job.experienceMin, job.experienceMax)}</Badge>
                 {job.urgent && <Badge variant="red">Urgent</Badge>}
-                {job.confidential && <Badge variant="neutral">Confidential client</Badge>}
               </div>
             </header>
 
@@ -188,20 +187,6 @@ export default async function JobDetailPage(props: { params: Promise<{ slug: str
               )}
 
               <ChecklistSection id="job-benefits" title="Benefits & perks" items={benefits} icon={Gift} tone="text-secondary" />
-
-              {/* The client's profile is shown only when the job is not confidential. */}
-              {!job.confidential && job.company.about && (
-                <Card className="bg-background-alt">
-                  <h2 className="flex items-center gap-2 text-[16px] font-bold">
-                    <Building2 className="size-4.5 text-primary" aria-hidden />
-                    About {job.company.name}
-                  </h2>
-                  <p className="mt-2.5 text-[14.5px] leading-relaxed text-body">{job.company.about}</p>
-                  <p className="mt-3 text-[13px] text-faint">
-                    {[job.company.industry, job.company.size ? `${job.company.size} employees` : null].filter(Boolean).join(" · ")}
-                  </p>
-                </Card>
-              )}
 
               {open && (
                 <section id="apply" aria-labelledby="apply-heading" className="scroll-mt-24 rounded-card border border-line bg-surface p-6 shadow-card md:p-8">

@@ -3,7 +3,7 @@ import type { ApplicationStatus, JobStatus } from "@prisma/client";
 import { parseDateOnly, formatDateOnly } from "@/features/jobs/options";
 
 /**
- * Validation for the admin job, client and application screens.
+ * Validation for the admin job and application screens.
  * No `server-only`: the forms run the same rules for inline errors.
  */
 
@@ -95,11 +95,11 @@ export const jobSchema = z
     title: z.string().trim().min(4, "Give the role a proper title").max(80, "Keep the title under 80 characters"),
     departmentId: z.string().trim().min(1, "Choose a role category"),
     industryId: z.preprocess(blankToUndefined, z.string().trim().optional()),
-    companyId: z.preprocess(blankToUndefined, z.string().trim().optional()),
-    newCompanyName: optionalText(80, 2),
-    newCompanyWebsite: z.preprocess(blankToUndefined, z.string().trim().url("Enter a full URL (https://…)").max(200).optional()),
-    confidential: z.boolean(),
-    confidentialLabel: optionalText(80, 2),
+    employerLabel: z
+      .string()
+      .trim()
+      .min(2, "Describe the hiring company, e.g. “Leading private bank”")
+      .max(80, "Keep it under 80 characters"),
     location: z.string().trim().min(2, "Where is this role based?").max(60, "Keep the location under 60 characters"),
     workMode: z.enum(WORK_MODES),
     employmentType: z.enum(EMPLOYMENT_TYPES),
@@ -121,15 +121,6 @@ export const jobSchema = z
     status: z.enum(JOB_FORM_STATUSES),
   })
   .superRefine((d, ctx) => {
-    if (!d.companyId && !d.newCompanyName) {
-      ctx.addIssue({ code: "custom", path: ["companyId"], message: "Choose a client or enter a new client name" });
-    }
-    if (d.companyId && d.newCompanyName) {
-      ctx.addIssue({ code: "custom", path: ["newCompanyName"], message: "Either pick an existing client or add a new one, not both" });
-    }
-    if (d.confidential && !d.confidentialLabel) {
-      ctx.addIssue({ code: "custom", path: ["confidentialLabel"], message: "Add the label shown instead of the client name, e.g. “Leading private bank”" });
-    }
     if (d.experienceMax < d.experienceMin) {
       ctx.addIssue({ code: "custom", path: ["experienceMax"], message: "Max experience can't be below min" });
     }
@@ -163,16 +154,32 @@ export function canTransitionJob(from: JobStatus, to: JobStatus): boolean {
 export const JOB_STATUSES = ["DRAFT", "PUBLISHED", "CLOSED", "ARCHIVED"] as const;
 export const jobStatusSchema = z.enum(JOB_STATUSES);
 
-/* ---------------- clients ---------------- */
+/* ---------------- role categories ---------------- */
 
-export const clientSchema = z.object({
-  name: z.string().trim().min(2, "Enter the client name").max(80, "Keep the name under 80 characters"),
-  website: z.preprocess(blankToUndefined, z.string().trim().url("Enter a full URL (https://…)").max(200).optional()),
-  industry: optionalText(60),
-  size: optionalText(40),
-  about: optionalText(2000),
-});
-export type ClientInput = z.input<typeof clientSchema>;
+/** Trims and collapses inner spaces: "  Sales   Ops " → "Sales Ops". */
+export function tidyName(value: string): string {
+  return value.trim().replace(/\s+/g, " ");
+}
+
+/** Comparison key for duplicate checks: "Sales & BD" and "sales and bd" give the same key. */
+export function categoryKey(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+export const categoryNameSchema = z
+  .string()
+  .transform(tidyName)
+  .pipe(
+    z
+      .string()
+      .min(2, "Enter at least 2 characters")
+      .max(48, "Keep the name under 48 characters")
+      .regex(/^[A-Za-z0-9 &,\-/().']+$/, "Use letters, numbers, spaces and & , - / ( ) . ' only")
+      .regex(/[A-Za-z]/, "The name needs at least one letter")
+  );
 
 /* ---------------- applications ---------------- */
 

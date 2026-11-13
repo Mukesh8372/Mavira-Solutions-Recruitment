@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowRightLeft, Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Icon } from "@/components/shared/icon";
 import { contentIconOptions, type IndustryInput } from "@/features/site-content/schemas";
-import { saveIndustry, deleteIndustry } from "@/features/site-content/actions";
+import { saveIndustry, deleteIndustry, moveIndustryJobsAndDelete } from "@/features/site-content/actions";
 
 type IndustryRow = { id: string; name: string; slug: string; icon: string | null; description: string | null; jobCount: number };
 
@@ -19,6 +19,7 @@ const emptyDraft: IndustryInput = { name: "", description: "", icon: "building" 
 
 export function IndustriesManager({ industries }: { industries: IndustryRow[] }) {
   const [editing, setEditing] = useState<string | "new" | null>(null);
+  const [moving, setMoving] = useState<string | null>(null);
 
   return (
     <div className="space-y-4">
@@ -45,6 +46,10 @@ export function IndustriesManager({ industries }: { industries: IndustryRow[] })
                 onClose={() => setEditing(null)}
               />
             </li>
+          ) : moving === industry.id ? (
+            <li key={industry.id} className="md:col-span-2">
+              <MoveIndustryJobs industry={industry} others={industries.filter((o) => o.id !== industry.id)} onClose={() => setMoving(null)} />
+            </li>
           ) : (
             <li key={industry.id} className="flex items-start gap-3 rounded-card border border-line bg-surface p-4">
               <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary">
@@ -66,14 +71,27 @@ export function IndustriesManager({ industries }: { industries: IndustryRow[] })
                 >
                   <Pencil className="size-3.5" aria-hidden />
                 </button>
-                <DeleteIndustryButton id={industry.id} name={industry.name} disabled={industry.jobCount > 0} />
+                {industry.jobCount > 0 ? (
+                  <button
+                    type="button"
+                    aria-label={`Move the jobs in ${industry.name} to another industry, then delete it`}
+                    title="Move jobs, then delete"
+                    onClick={() => setMoving(industry.id)}
+                    className="grid size-8 place-items-center rounded-lg border border-line text-faint transition-colors hover:border-destructive hover:text-destructive"
+                  >
+                    <ArrowRightLeft className="size-3.5" aria-hidden />
+                  </button>
+                ) : (
+                  <DeleteIndustryButton id={industry.id} name={industry.name} disabled={false} />
+                )}
               </div>
             </li>
           )
         )}
       </ul>
       <p className="text-[12.5px] text-faint">
-        Renaming keeps the page URL stable so indexed links never break. Industries with jobs attached can&apos;t be deleted.
+        Renaming keeps the page URL stable so indexed links never break. An industry that jobs use can&apos;t be deleted directly. Use{" "}
+        <ArrowRightLeft className="inline size-3.5" aria-label="Move jobs, then delete" /> to move its jobs first. Draft, closed and archived jobs count too.
       </p>
     </div>
   );
@@ -190,5 +208,68 @@ function DeleteIndustryButton({ id, name, disabled }: { id: string; name: string
     >
       <Trash2 className="size-3.5" aria-hidden />
     </button>
+  );
+}
+
+function MoveIndustryJobs({ industry, others, onClose }: { industry: IndustryRow; others: IndustryRow[]; onClose: () => void }) {
+  const [targetId, setTargetId] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const router = useRouter();
+  const n = industry.jobCount;
+
+  return (
+    <form
+      className="space-y-3 rounded-card border border-destructive/40 bg-surface p-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        setError(null);
+        startTransition(async () => {
+          const res = await moveIndustryJobsAndDelete(industry.id, targetId);
+          if (res.ok) {
+            toast.success(res.message ?? "Done");
+            router.refresh();
+            onClose();
+          } else {
+            setError(res.error);
+          }
+        });
+      }}
+    >
+      <div className="flex items-center justify-between">
+        <p className="text-[14px] font-bold text-foreground">Delete &quot;{industry.name}&quot;</p>
+        <button type="button" onClick={onClose} aria-label="Cancel" className="grid size-8 place-items-center rounded-lg text-faint hover:text-foreground">
+          <X className="size-4" aria-hidden />
+        </button>
+      </div>
+      <p className="text-[13.5px] text-body">
+        {n} job{n === 1 ? " uses" : "s use"} this industry. They move to the industry you choose, and then the &quot;{industry.name}&quot;
+        page, its footer link and its homepage card are deleted. This can&apos;t be undone.
+      </p>
+      <div>
+        <Label htmlFor={`move-ind-${industry.id}`}>Move the jobs to</Label>
+        <Select id={`move-ind-${industry.id}`} value={targetId} onChange={(e) => setTargetId(e.target.value)}>
+          <option value="">No industry</option>
+          {others.map((o) => (
+            <option key={o.id} value={o.id}>
+              {o.name}
+            </option>
+          ))}
+        </Select>
+        {error && (
+          <p role="alert" className="mt-1.5 text-[13px] font-medium text-destructive">
+            {error}
+          </p>
+        )}
+      </div>
+      <div className="flex gap-2">
+        <Button type="submit" variant="destructive" loading={pending}>
+          Move {n} job{n === 1 ? "" : "s"} and delete
+        </Button>
+        <Button type="button" variant="secondary" onClick={onClose}>
+          Cancel
+        </Button>
+      </div>
+    </form>
   );
 }

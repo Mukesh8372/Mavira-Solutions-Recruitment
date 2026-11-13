@@ -7,7 +7,7 @@ export const adminNav: DashboardNavItem[] = [
   { label: "Leads", href: "/admin/leads", icon: "target" },
   { label: "Jobs", href: "/admin/jobs", icon: "briefcase" },
   { label: "Applications", href: "/admin/applications", icon: "inbox" },
-  { label: "Clients", href: "/admin/clients", icon: "building" },
+  { label: "Role categories", href: "/admin/categories", icon: "tags" },
   { label: "Site content", href: "/admin/site-content", icon: "globe" },
   { label: "Blog", href: "/admin/blog", icon: "newspaper" },
   { label: "Success stories", href: "/admin/success-stories", icon: "award" },

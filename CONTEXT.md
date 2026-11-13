@@ -86,10 +86,12 @@ src/
     home/                  Homepage sections.
     leads/                 Public "Request Talent" form and action.
     newsletter/            Public newsletter form and action.
-    jobs/                  Job board. queries.ts (open-job reads), display.ts (filters, URLs, isJobOpen, clientLabel),
-                           options.ts (fixed lists), schemas.ts (apply validation), actions.ts (applyToJob),
-                           cache.ts (revalidateJobPages), job-card, job-filters, job-search-form, apply-form,
-                           latest-jobs-section (home), industry-jobs-section (industry pages).
+    jobs/                  Job board. queries.ts (open-job reads), display.ts (filters, URLs, isJobOpen),
+                           options.ts (fixed lists, city suggestions, normalizeCity), schemas.ts (apply validation),
+                           actions.ts (applyToJob), cache.ts (revalidateJobPages), job-card, job-filters,
+                           job-search-form, apply-form, latest-jobs-section (home), industry-jobs-section (industry pages),
+                           category-actions.ts + categories-manager (role categories), quick-add (add a category or
+                           industry from the job form).
     site-content/          Admin-editable content blocks stored in the Setting table, plus FAQ,
                            industry and success-story CRUD.
   components/
@@ -142,7 +144,7 @@ Import alias: `@/*` maps to `src/*`.
 | `/industries` | Industry | Static |
 | `/industries/[slug]` | Industry, Job (open jobs in the industry) | Dynamic |
 | `/jobs` | Job (open), Department, Industry. Filters in the query string: `q`, `location`, `category`, `industry`, `experience`, `type`, `mode`, `sort`, `page` (10 a page). | Dynamic |
-| `/jobs/[slug]` | Job, Company, Department, Industry. DRAFT/ARCHIVED → 404. CLOSED or past `validThrough` → banner, no form, no JobPosting JSON-LD, `noindex`. Confidential jobs hide the client. Holds the apply form. | Dynamic |
+| `/jobs/[slug]` | Job, Department, Industry. DRAFT/ARCHIVED → 404. CLOSED or past `validThrough` → banner, no form, no JobPosting JSON-LD, `noindex`. Shows `employerLabel`, never a client name. Holds the apply form. | Dynamic |
 | `/jobs/category/[slug]` | Department, Job (open) | SSG (one per Department) |
 | `/employers` | Testimonial, FaqItem, Setting (process, contact). Holds the Request Talent form at `#request-talent`. | Static |
 | `/process` | Setting (process) | Static |
@@ -156,7 +158,7 @@ Import alias: `@/*` maps to `src/*`.
 | `/faq` | FaqItem, Setting (contact) | Static |
 | `/contact` | Setting (contact). No form. Phone, WhatsApp, email, map link. | Static |
 | `/privacy-policy`, `/terms` | Text in code | Static |
-| `/sitemap.xml` | Static list + BlogPost, Industry, SuccessStory, Department, Job (open) | Static |
+| `/sitemap.xml` | Static list + BlogPost, Industry, SuccessStory, Department (only those with an open job), Job (open) | Static |
 
 "Static" means Next.js prerenders the page at build time **with data from the database**. The page changes only when a server action calls `revalidatePath` for that exact path, or on the next deploy. See §6.
 
@@ -175,14 +177,14 @@ The blog categories are fixed in `src/features/blog/queries.ts`: `career-advice`
 |---|---|
 | `/admin` | Counts and the 8 latest leads. |
 | `/admin/leads` | Lead list, filter by status (`?status=new`), change status. |
-| `/admin/jobs`, `/new`, `/[id]/edit` | Post, edit, publish, close, reopen, archive jobs; featured/urgent flags; application counts. Status moves follow `JOB_STATUS_TRANSITIONS` in `features/jobs/admin-schemas.ts`. |
-| `/admin/applications` | Applicant list with URL filters (`job`, `category`, `status`, `ageMin`/`ageMax`, `expMin`/`expMax`, `ctcMin`/`ctcMax`, `city`, `qualification`, `notice`, `from`/`to`, `q`, `sort`, `page`), 25 a page. Download resume, change status, internal note, delete. |
-| `/admin/clients` | Create, edit, delete clients (`Company` rows). Deletion is blocked while jobs are attached. |
+| `/admin/jobs`, `/new`, `/[id]/edit` | Post, edit, publish, close, reopen, archive jobs; featured/urgent flags; application counts. Status moves follow `JOB_STATUS_TRANSITIONS` in `features/jobs/admin-schemas.ts`. The form can add a role category or an industry without leaving the page. |
+| `/admin/categories` | Add, rename and delete role categories (`Department`). A category that jobs use (any status) can't be deleted; "Move jobs, then delete" moves them to another category in one transaction. The slug follows a rename only while no job uses the category. |
+| `/admin/applications` | Applicant list with URL filters (`job`, `category`, `status`, `ageMin`/`ageMax`, `expMin`/`expMax`, `ctcMin`/`ctcMax`, `city`, `qualification`, `notice`, `from`/`to`, `q`, `sort`, `page`), 25 a page. The city list shows the cities applicants entered, with counts. Download resume, change status, internal note, delete. |
 | `/admin/site-content` | Edit announcement bar, hero, process (4 steps), why-us (4 cards), achievements, contact details. |
 | `/admin/blog`, `/new`, `/[id]/edit` | Write, edit, publish and delete markdown posts. |
 | `/admin/success-stories` | Create, edit, delete stories. |
 | `/admin/faqs` | Create, edit, delete FAQs. |
-| `/admin/industries` | Create, edit, delete industries. The slug does not change on rename. |
+| `/admin/industries` | Create, edit, delete industries. The slug does not change on rename. An industry that jobs use can't be deleted directly; "Move jobs, then delete" moves them to another industry or to none. |
 | `/admin/testimonials` | Approve, feature, delete. **No create or edit.** |
 | `/admin/newsletter` | List and delete subscribers. |
 | `/admin/users` | List users. ADMIN can change roles. STAFF has read-only access. |
@@ -227,7 +229,7 @@ Each table has one helper that lists its pages:
 | Setting: contact, announcement | inline | Whole layout tree |
 | Job | `revalidateJobPages()` in `features/jobs/cache.ts` | `/`, `/jobs`, `/jobs/*`, `/jobs/category/*`, `/industries/*`, `/sitemap.xml`, `/admin`, `/admin/jobs`, `/admin/applications` |
 | JobApplication | inline in `applyToJob` and `features/jobs/admin-actions.ts` | `/admin`, `/admin/applications`, `/admin/jobs` |
-| Company (client) | `saveClient` / `deleteClient` in `features/jobs/admin-actions.ts` | `/admin/clients` plus `revalidateJobPages()` |
+| Department (role category) | `revalidateCategoryPages()` in `features/jobs/category-actions.ts` | `revalidateJobPages()` plus `/admin/categories` |
 
 `/sitemap.xml` is a cached route handler. Name it on its own: `revalidatePath("/sitemap.xml")`.
 
@@ -238,7 +240,9 @@ Columns typed `Json` (for example `BlogPost.tags`, `SuccessStory.results`, `Sett
 ## 7. Database
 
 - Provider: PostgreSQL (`prisma/schema.prisma`). The local `.env` points at a Neon database (region ap-southeast-1).
-- On 2026-11-12 the migration history was baselined. `prisma/migrations/0_init` holds the full schema and is marked as applied on Neon. `npx prisma migrate status` reports "Database schema is up to date".
+- On 2026-11-12 the migration history was baselined. `prisma/migrations/0_init` holds the full schema and is marked as applied on Neon.
+- Later migrations: `20261112120000_jobs_public_applications` (applied), `20261113120000_job_employer_label` (renames `Job.confidentialLabel` to `employerLabel`, drops `Job.confidential`, makes `Job.companyId` optional; hand-written so the label text is kept).
+- When `prisma migrate diff` would drop and re-add a column that holds data, write the migration by hand with `RENAME COLUMN`.
 - Schema change workflow: edit `schema.prisma`, run `npx prisma migrate diff --from-schema-datasource prisma/schema.prisma --to-schema-datamodel prisma/schema.prisma --script` into a new `prisma/migrations/<timestamp>_<name>/migration.sql`, review the SQL, then run `npx prisma migrate deploy` (this writes to the database in `DATABASE_URL`) and `npx prisma generate`.
 
 ### Tables in use
@@ -255,9 +259,8 @@ Columns typed `Json` (for example `BlogPost.tags`, `SuccessStory.results`, `Sett
 | `NewsletterSubscriber` | Email list. |
 | `Setting` | Key-value content blocks. |
 | `AuditLog` | One row per admin mutation. |
-| `Job` | Job posts. `confidential` hides the client name; `confidentialLabel` is shown instead. (Job board, in progress.) |
-| `Department` | Job role categories. Seeded by `npm run seed:categories`. |
-| `Company` | Client records attached to jobs. |
+| `Job` | Job posts. `employerLabel` (required, max 80) describes the hiring company publicly, e.g. "Leading private bank". The admin does not pick a client. JobPosting JSON-LD always uses `hiringOrganization.name = "confidential"`. `companyId` is optional and legacy: only jobs created before 2026-11-13 have it. |
+| `Department` | Job role categories. The first 14 came from `npm run seed:categories`. Admins add, rename and delete them in `/admin/categories` or add one from the job form. |
 | `JobApplication` | Public "Apply" submissions. Holds applicant details and resume metadata (`resumeKey` in Cloudflare R2). One row per job per email. |
 | `SystemIncident` | Failures with no signed-in user, such as a resume upload failing. Shown on `/admin` until resolved. |
 
@@ -298,9 +301,8 @@ The seed creates:
 
 These items are unused by the current site. Remove them only as a deliberate change.
 
-- Prisma models: `CandidateProfile`, `EmployerProfile`, `Company`, `Department`, `Job`, `Application`, `Interview`, `Resume`, `SavedJob`, `ContactQuery`, `Notification`. Enums for jobs, applications and interviews.
+- Prisma models: `CandidateProfile`, `EmployerProfile`, `Company` (and the optional `Job.companyId` link), `Application`, `Interview`, `Resume`, `SavedJob`, `ContactQuery`, `Notification`. Enums for jobs, applications and interviews.
 - `InterviewStatusBadge` in `components/dashboard/status-badge.tsx`.
-- `departmentSchema` in `site-content/schemas.ts` (role categories are seeded, not edited in the admin).
 - Content blocks with an action, a form and a query but no screen: `StatsForm`, `LogosForm`, `TeamForm`, `saveStatsContent`, `saveLogosContent`, `saveTeam`, `getClientLogos`, `getTeam`. No public page reads them.
 - Unimported components: `components/shared/stat-counter.tsx`.
 - `EMPLOYER` and `CANDIDATE` roles land on `/` after sign-in and have no screens.
@@ -349,6 +351,6 @@ These items are unused by the current site. Remove them only as a deliberate cha
 | Colors, radii, shadows, fonts | `src/app/globals.css` (`:root`, `.dark`, `@theme inline`) |
 | Legal text | `src/app/(site)/privacy-policy/page.tsx`, `src/app/(site)/terms/page.tsx` |
 | Admin sidebar | `src/config/dashboard-nav.ts` |
-| Apply form fields and rules | `src/features/jobs/schemas.ts` (rules), `src/features/jobs/options.ts` (city, qualification and notice-period lists, age limits), `src/features/jobs/apply-form.tsx` (layout) |
+| Apply form fields and rules | `src/features/jobs/schemas.ts` (rules), `src/features/jobs/options.ts` (city suggestions and old-name map, qualification and notice-period lists, age limits). The city is free text: `normalizeCity` tidies it and maps old names (Bombay → Mumbai), `src/features/jobs/apply-form.tsx` (layout) |
 | Resume size and types | `src/lib/resumes.ts`; the body limit in `next.config.ts` must stay above it |
 | Social icons | Shown as "coming soon" placeholders in `site-footer.tsx` and `contact/page.tsx`. The `social` URLs in the contact setting are stored but not rendered as links. |

@@ -86,11 +86,32 @@ describe("applySchema", () => {
     expect(firstError({ ...valid, dateOfBirth: "" })).toMatch(/YYYY-MM-DD/);
   });
 
-  it("restricts qualification, city and notice period to the lists", () => {
+  it("restricts qualification and notice period to the lists", () => {
     expect(firstError({ ...valid, qualification: "PhD" })).toBe("Choose your highest qualification");
-    expect(firstError({ ...valid, currentCity: "Paris" })).toBe("Choose your current city");
     expect(firstError({ ...valid, noticePeriodDays: "45" })).toBe("Choose your notice period");
     expect(firstError({ ...valid, noticePeriodDays: "" })).toBe("Choose your notice period");
+  });
+
+  it("accepts any typed city and cleans it", () => {
+    const city = (value: unknown) => {
+      const r = applySchema.safeParse({ ...valid, currentCity: value });
+      return r.success ? r.data.currentCity : null;
+    };
+    expect(city("Vapi")).toBe("Vapi");
+    expect(city("  navi   mumbai ")).toBe("Navi Mumbai");
+    expect(city("bombay")).toBe("Mumbai");
+    expect(city("Bangalore")).toBe("Bengaluru");
+    expect(city("sawai madhopur")).toBe("Sawai Madhopur");
+  });
+
+  it("rejects an empty or malformed city", () => {
+    expect(firstError({ ...valid, currentCity: "" })).toBe("Enter your current city");
+    expect(firstError({ ...valid, currentCity: "   " })).toBe("Enter your current city");
+    expect(firstError({ ...valid, currentCity: undefined })).toBe("Enter your current city");
+    expect(firstError({ ...valid, currentCity: "M" })).toBe("Enter your current city");
+    expect(firstError({ ...valid, currentCity: "Thane 400601" })).toBe("Use letters only for the city, e.g. Thane");
+    expect(firstError({ ...valid, currentCity: "<script>" })).toBe("Use letters only for the city, e.g. Thane");
+    expect(firstError({ ...valid, currentCity: "a".repeat(61) })).toBe("Keep the city under 60 characters");
   });
 
   it("checks experience and CTC formats", () => {

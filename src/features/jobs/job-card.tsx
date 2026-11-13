@@ -3,7 +3,6 @@ import { Building2, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatExperience, formatRelativeDate, formatSalaryRange, labelEmploymentType, labelWorkMode } from "@/lib/format";
-import { clientLabel } from "@/features/jobs/display";
 import type { JobWithRelations } from "@/features/jobs/queries";
 
 export function JobCard({ job }: { job: JobWithRelations }) {
@@ -20,7 +19,7 @@ export function JobCard({ job }: { job: JobWithRelations }) {
         <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13.5px] text-body">
           <span className="inline-flex items-center gap-1">
             <Building2 className="size-3.5 text-faint" aria-hidden />
-            {clientLabel(job)}
+            {job.employerLabel}
           </span>
           <span className="inline-flex items-center gap-1">
             <MapPin className="size-3.5 text-faint" aria-hidden />
@@ -34,7 +33,6 @@ export function JobCard({ job }: { job: JobWithRelations }) {
         <Badge variant="purple">{labelWorkMode(job.workMode)}</Badge>
         <Badge variant="green">{formatExperience(job.experienceMin, job.experienceMax)}</Badge>
         {job.urgent && <Badge variant="red">Urgent</Badge>}
-        {job.confidential && <Badge variant="neutral">Confidential</Badge>}
       </div>
 
       <div className="mt-auto flex items-center justify-between border-t border-line pt-4">

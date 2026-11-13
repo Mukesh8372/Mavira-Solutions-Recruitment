@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
+import { revalidateJobPages } from "@/features/jobs/cache";
 import {
   achievementsSchema,
   announcementSchema,
@@ -21,7 +22,7 @@ import {
   whyUsSchema,
 } from "@/features/site-content/schemas";
 
-export type ContentActionResult = { ok: true; message?: string } | { ok: false; error: string };
+export type ContentActionResult = { ok: true; message?: string; id?: string; name?: string } | { ok: false; error: string };
 
 async function requireStaff() {
   return requireRole(["ADMIN", "STAFF"]);
@@ -171,18 +172,29 @@ export async function saveIndustry(input: unknown, id?: string): Promise<Content
   if (id) {
     const existing = await prisma.industry.findUnique({ where: { id } });
     if (!existing) return { ok: false, error: "Industry not found." };
+    const sameName = await prisma.industry.findFirst({
+      where: { name: { equals: parsed.data.name, mode: "insensitive" }, NOT: { id } },
+      select: { name: true },
+    });
+    if (sameName) return { ok: false, error: `"${sameName.name}" already exists.` };
     // Slug stays stable on rename so indexed landing-page URLs never break.
     await prisma.industry.update({ where: { id }, data: parsed.data });
     await audit(session.user.id, "content.industry.update", "Industry", id);
-  } else {
-    const slug = slugify(parsed.data.name);
-    const clash = await prisma.industry.findUnique({ where: { slug } });
-    if (clash) return { ok: false, error: "An industry with this name already exists." };
-    const created = await prisma.industry.create({ data: { ...parsed.data, slug } });
-    await audit(session.user.id, "content.industry.create", "Industry", created.id);
+    revalidateIndustryPages();
+    return { ok: true, message: "Industry updated", id, name: parsed.data.name };
   }
+
+  const slug = slugify(parsed.data.name);
+  if (!slug) return { ok: false, error: "The name needs at least one letter." };
+  const clash = await prisma.industry.findFirst({
+    where: { OR: [{ slug }, { name: { equals: parsed.data.name, mode: "insensitive" } }] },
+    select: { name: true },
+  });
+  if (clash) return { ok: false, error: `"${clash.name}" already exists.` };
+  const created = await prisma.industry.create({ data: { ...parsed.data, slug } });
+  await audit(session.user.id, "content.industry.create", "Industry", created.id);
   revalidateIndustryPages();
-  return { ok: true, message: id ? "Industry updated" : "Industry added" };
+  return { ok: true, message: "Industry added", id: created.id, name: created.name };
 }
 
 /* ---------------- Success stories CRUD ---------------- */
@@ -255,4 +267,36 @@ export async function deleteIndustry(id: string): Promise<ContentActionResult> {
   await audit(session.user.id, "content.industry.delete", "Industry", id, { name: existing.name });
   revalidateIndustryPages();
   return { ok: true, message: "Industry deleted" };
+}
+
+/**
+ * Moves every job (any status) of an industry to `targetId`, or to no industry when
+ * `targetId` is empty, then deletes the industry. One transaction.
+ */
+export async function moveIndustryJobsAndDelete(id: string, targetId: string): Promise<ContentActionResult> {
+  const session = await requireStaff();
+  if (!session) return { ok: false, error: "You don't have permission to edit industries." };
+  if (targetId === id) return { ok: false, error: "Choose a different industry." };
+
+  const [source, target] = await Promise.all([
+    prisma.industry.findUnique({ where: { id }, select: { id: true, name: true, slug: true } }),
+    targetId ? prisma.industry.findUnique({ where: { id: targetId }, select: { id: true, name: true } }) : null,
+  ]);
+  if (!source) return { ok: false, error: "Industry not found." };
+  if (targetId && !target) return { ok: false, error: "The industry to move the jobs to no longer exists." };
+
+  const moved = await prisma.$transaction(async (tx) => {
+    const { count } = await tx.job.updateMany({ where: { industryId: id }, data: { industryId: target?.id ?? null } });
+    await tx.industry.delete({ where: { id } });
+    return count;
+  });
+  await audit(session.user.id, "content.industry.merge", "Industry", id, {
+    from: { name: source.name, slug: source.slug },
+    to: target ? { id: target.id, name: target.name } : null,
+    jobsMoved: moved,
+  });
+  revalidateIndustryPages();
+  revalidateJobPages();
+  const where = target ? `to "${target.name}"` : "to no industry";
+  return { ok: true, message: `Moved ${moved} job${moved === 1 ? "" : "s"} ${where} and deleted "${source.name}"` };
 }

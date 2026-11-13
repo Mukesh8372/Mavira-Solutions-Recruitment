@@ -58,7 +58,7 @@ Applicants upload a resume (PDF, DOCX or DOC, up to 2 MB). Files are stored in o
 
 - **Public site:** home, about, 5 service pages, industries, employers (with the Request Talent form), process, why choose us, success stories, testimonials, FAQ, contact, blog, privacy, terms, 404.
 - **Job board:** `/jobs` with search and filters, job detail pages with Google JobPosting markup, category pages, and an apply form with resume upload. No applicant accounts.
-- **Admin CMS (`/admin`):** leads, jobs, applications (filters by age, experience, CTC, city and more), clients, site content blocks, blog, success stories, FAQs, industries, testimonial approval, newsletter list, user roles, password change, audit log.
+- **Admin CMS (`/admin`):** leads, jobs, applications (filters by age, experience, CTC, city and more), role categories, site content blocks, blog, success stories, FAQs, industries, testimonial approval, newsletter list, user roles, password change, audit log.
 - **SEO:** Metadata API, canonical URLs, JSON-LD (Organization, WebSite, BreadcrumbList, FAQPage, Article), `sitemap.xml`, `robots.txt`.
 - **Security:** zod on every action, bcrypt cost 12, role checks in the proxy, layouts and actions, honeypots and rate limits on public forms, security headers.
 

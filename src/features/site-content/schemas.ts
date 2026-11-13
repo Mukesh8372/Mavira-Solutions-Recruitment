@@ -71,8 +71,12 @@ export const faqSchema = z.object({
 export type FaqInput = z.infer<typeof faqSchema>;
 
 export const industrySchema = z.object({
-  name: z.string().trim().min(2).max(48),
-  description: z.string().trim().min(10).max(200),
+  name: z.string().trim().min(2, "Enter the industry name (at least 2 characters)").max(48, "Keep the name under 48 characters"),
+  description: z
+    .string()
+    .trim()
+    .min(10, "Write a description of at least 10 characters")
+    .max(200, "Keep the description under 200 characters"),
   icon,
 });
 export type IndustryInput = z.infer<typeof industrySchema>;
@@ -166,11 +170,6 @@ export const successStorySchema = z.object({
 });
 export type SuccessStoryInput = z.infer<typeof successStorySchema>;
 
-export const departmentSchema = z.object({
-  name: z.string().trim().min(2).max(48),
-  icon,
-});
-export type DepartmentInput = z.infer<typeof departmentSchema>;
 
 /** Setting-table keys for each content block. */
 export const contentKeys = {

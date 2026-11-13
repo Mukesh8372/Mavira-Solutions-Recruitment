@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clientLabel, isJobOpen, jobFiltersToParams, jobsHref, parseJobFilters } from "@/features/jobs/display";
+import { isJobOpen, jobFiltersToParams, jobsHref, parseJobFilters } from "@/features/jobs/display";
 
 describe("parseJobFilters", () => {
   it("reads valid values and drops bad ones", () => {
@@ -48,15 +48,5 @@ describe("isJobOpen", () => {
     expect(isJobOpen({ status: "PUBLISHED", validThrough: new Date("2026-11-12T09:59:59Z") }, now)).toBe(false);
     expect(isJobOpen({ status: "CLOSED", validThrough: null }, now)).toBe(false);
     expect(isJobOpen({ status: "DRAFT", validThrough: null }, now)).toBe(false);
-  });
-});
-
-describe("clientLabel", () => {
-  it("hides the client when confidential", () => {
-    const company = { name: "HDFC Bank" };
-    expect(clientLabel({ confidential: false, confidentialLabel: null, company })).toBe("HDFC Bank");
-    expect(clientLabel({ confidential: true, confidentialLabel: null, company })).toBe("Confidential client");
-    expect(clientLabel({ confidential: true, confidentialLabel: "  ", company })).toBe("Confidential client");
-    expect(clientLabel({ confidential: true, confidentialLabel: "Leading private bank", company })).toBe("Leading private bank");
   });
 });

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import type { JobStatus } from "@prisma/client";
-import { Lock, PlusCircle } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { JobStatusBadge } from "@/components/dashboard/status-badge";
 import { EmptyState } from "@/components/dashboard/empty-state";
@@ -9,7 +9,7 @@ import { TableShell, Table, THead, TH, TBody, TR, TD } from "@/components/dashbo
 import { FilterTabs } from "@/features/admin/filter-tabs";
 import { JobFlagToggles, JobStatusButtons } from "@/features/jobs/job-admin-actions";
 import { getAdminJobs } from "@/features/admin/queries";
-import { clientLabel, isJobOpen } from "@/features/jobs/display";
+import { isJobOpen } from "@/features/jobs/display";
 import { formatDate, formatRelativeDate } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Jobs — Admin", robots: { index: false } };
@@ -59,7 +59,7 @@ export default async function AdminJobsPage(props: { searchParams: Promise<{ sta
           <Table className="min-w-[1080px]">
             <THead>
               <TH>Role</TH>
-              <TH>Client</TH>
+              <TH>Hiring company</TH>
               <TH>Category</TH>
               <TH>Status</TH>
               <TH>Apply by</TH>
@@ -78,13 +78,7 @@ export default async function AdminJobsPage(props: { searchParams: Promise<{ sta
                         {job.location} · updated {formatRelativeDate(job.updatedAt)}
                       </span>
                     </TD>
-                    <TD>
-                      <span className="inline-flex items-center gap-1.5">
-                        {job.confidential && <Lock className="size-3.5 text-faint" aria-label="Confidential" />}
-                        {job.company.name}
-                      </span>
-                      {job.confidential && <span className="block text-[12px] text-faint">Shown as “{clientLabel(job)}”</span>}
-                    </TD>
+                    <TD>{job.employerLabel}</TD>
                     <TD>{job.department.name}</TD>
                     <TD>
                       <JobStatusBadge status={job.status} />

@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { saveJob } from "@/features/jobs/admin-actions";
 import { EMPLOYMENT_TYPES, JOB_FORM_STATUSES, WORK_MODES, istToday, jobSchema, type JobInput } from "@/features/jobs/admin-schemas";
@@ -12,11 +13,11 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { QuickAddCategory, QuickAddIndustry } from "@/features/jobs/quick-add";
 
 export type JobFormOptions = {
   departments: { id: string; name: string }[];
   industries: { id: string; name: string }[];
-  clients: { id: string; name: string }[];
 };
 
 /** Raw form values. Validation runs through `jobSchema`, the same rules the server uses. */
@@ -24,11 +25,7 @@ export type JobFormValues = {
   title: string;
   departmentId: string;
   industryId: string;
-  companyId: string; // "" with newCompanyName set means "create a client"
-  newCompanyName: string;
-  newCompanyWebsite: string;
-  confidential: boolean;
-  confidentialLabel: string;
+  employerLabel: string;
   location: string;
   workMode: (typeof WORK_MODES)[number];
   employmentType: (typeof EMPLOYMENT_TYPES)[number];
@@ -54,11 +51,7 @@ export const emptyJobValues: JobFormValues = {
   title: "",
   departmentId: "",
   industryId: "",
-  companyId: "",
-  newCompanyName: "",
-  newCompanyWebsite: "",
-  confidential: false,
-  confidentialLabel: "",
+  employerLabel: "",
   location: "",
   workMode: "ONSITE",
   employmentType: "FULL_TIME",
@@ -80,8 +73,6 @@ export const emptyJobValues: JobFormValues = {
   status: "DRAFT",
 };
 
-const NEW_CLIENT = "__new__";
-
 export function JobForm({
   options,
   jobId,
@@ -96,7 +87,9 @@ export function JobForm({
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const [clientChoice, setClientChoice] = useState<string>(defaults?.companyId || (defaults?.newCompanyName ? NEW_CLIENT : ""));
+  // Local copies so a category or industry added from this form appears at once.
+  const [departments, setDepartments] = useState(options.departments);
+  const [industries, setIndustries] = useState(options.industries);
 
   const {
     register,
@@ -104,17 +97,15 @@ export function JobForm({
     setError,
     clearErrors,
     setValue,
-    control,
     formState: { errors },
   } = useForm<JobFormValues>({ defaultValues: { ...emptyJobValues, ...defaults } });
 
-  const confidential = useWatch({ control, name: "confidential" });
   const locked = currentStatus === "CLOSED" || currentStatus === "ARCHIVED";
 
   const onSubmit = (values: JobFormValues) => {
     setServerError(null);
     clearErrors();
-    const input: JobInput = { ...values, companyId: clientChoice === NEW_CLIENT ? "" : clientChoice, newCompanyName: clientChoice === NEW_CLIENT ? values.newCompanyName : "" };
+    const input: JobInput = values;
     const parsed = jobSchema.safeParse(input);
     if (!parsed.success) {
       for (const issue of parsed.error.issues) {
@@ -155,31 +146,58 @@ export function JobForm({
         <Field id="job-title" label="Job title" error={err("title")}>
           {(a) => <Input {...a} maxLength={80} placeholder="Relationship Manager — Wealth" {...register("title")} />}
         </Field>
+        <Field
+          id="job-employer"
+          label="Hiring company (shown on the website)"
+          error={err("employerLabel")}
+          hint="Describe the employer without naming it, e.g. “Leading private bank” or “Top broking house”."
+        >
+          {(a) => <Input {...a} maxLength={80} placeholder="Leading private bank" {...register("employerLabel")} />}
+        </Field>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field id="job-department" label="Role category" error={err("departmentId")}>
-            {(a) => (
-              <Select {...a} {...register("departmentId")}>
-                <option value="">Select a category</option>
-                {options.departments.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </Select>
-            )}
-          </Field>
-          <Field id="job-industry" label="Industry (optional)" error={err("industryId")} hint="Shown on the industry's public page.">
-            {(a) => (
-              <Select {...a} {...register("industryId")}>
-                <option value="">None</option>
-                {options.industries.map((i) => (
-                  <option key={i.id} value={i.id}>
-                    {i.name}
-                  </option>
-                ))}
-              </Select>
-            )}
-          </Field>
+          <div>
+            <Field id="job-department" label="Role category" error={err("departmentId")}>
+              {(a) => (
+                <Select {...a} {...register("departmentId")}>
+                  <option value="">Select a category</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </Field>
+            <QuickAddCategory
+              onAdded={(option, isNew) => {
+                // Render the new <option> first, or the select can't show it as chosen.
+                if (isNew) flushSync(() => setDepartments((list) => [...list, option].sort((x, y) => x.name.localeCompare(y.name))));
+                setValue("departmentId", option.id, { shouldDirty: true });
+                clearErrors("departmentId");
+              }}
+            />
+          </div>
+          <div>
+            <Field id="job-industry" label="Industry (optional)" error={err("industryId")} hint="Shown on the industry's public page.">
+              {(a) => (
+                <Select {...a} {...register("industryId")}>
+                  <option value="">None</option>
+                  {industries.map((i) => (
+                    <option key={i.id} value={i.id}>
+                      {i.name}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </Field>
+            <QuickAddIndustry
+              onAdded={(option) => {
+                flushSync(() => setIndustries((list) => [...list, option].sort((x, y) => x.name.localeCompare(y.name))));
+                setValue("industryId", option.id, { shouldDirty: true });
+                clearErrors("industryId");
+              }}
+            />
+          </div>
           <Field id="job-location" label="Location" error={err("location")}>
             {(a) => <Input {...a} maxLength={60} placeholder="Thane" {...register("location")} />}
           </Field>
@@ -209,56 +227,6 @@ export function JobForm({
             {(a) => <Input {...a} type="date" min={istToday()} {...register("validThrough")} />}
           </Field>
         </div>
-      </fieldset>
-
-      <fieldset className="space-y-4">
-        <legend className="mb-1 text-[15px] font-bold text-foreground">Client</legend>
-        <Field id="job-client" label="Client" error={err("companyId")}>
-          {(a) => (
-            <Select
-              {...a}
-              value={clientChoice}
-              onChange={(e) => {
-                setClientChoice(e.target.value);
-                clearErrors(["companyId", "newCompanyName"]);
-                if (e.target.value !== NEW_CLIENT) {
-                  setValue("newCompanyName", "");
-                  setValue("newCompanyWebsite", "");
-                }
-              }}
-            >
-              <option value="">Select a client</option>
-              {options.clients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-              <option value={NEW_CLIENT}>+ Add a new client</option>
-            </Select>
-          )}
-        </Field>
-        {clientChoice === NEW_CLIENT && (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="job-newclient" label="New client name" error={err("newCompanyName")}>
-              {(a) => <Input {...a} maxLength={80} placeholder="Kotak Securities" {...register("newCompanyName")} />}
-            </Field>
-            <Field id="job-newclient-site" label="Website (optional)" error={err("newCompanyWebsite")}>
-              {(a) => <Input {...a} type="url" placeholder="https://" {...register("newCompanyWebsite")} />}
-            </Field>
-          </div>
-        )}
-        <label className="flex items-start gap-2.5 text-[14px] text-body">
-          <input type="checkbox" className="mt-0.5 size-4 accent-(--color-primary)" {...register("confidential")} />
-          <span>
-            <span className="block font-semibold text-foreground">Confidential client</span>
-            <span className="block text-[13px] text-faint">The client name is hidden on the website and in search engines. A label is shown instead.</span>
-          </span>
-        </label>
-        {confidential && (
-          <Field id="job-conf-label" label="Label shown instead of the client" error={err("confidentialLabel")}>
-            {(a) => <Input {...a} maxLength={80} placeholder="Leading private bank" {...register("confidentialLabel")} />}
-          </Field>
-        )}
       </fieldset>
 
       <fieldset className="space-y-4">

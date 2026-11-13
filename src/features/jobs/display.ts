@@ -101,10 +101,4 @@ export function isJobOpen(job: { status: JobStatus; validThrough: Date | null },
   return job.status === "PUBLISHED" && (job.validThrough === null || job.validThrough.getTime() > now.getTime());
 }
 
-export const CONFIDENTIAL_CLIENT_LABEL = "Confidential client";
 
-/** The employer name to show publicly. Confidential jobs never reveal the client. */
-export function clientLabel(job: { confidential: boolean; confidentialLabel: string | null; company: { name: string } }): string {
-  if (!job.confidential) return job.company.name;
-  return job.confidentialLabel?.trim() || CONFIDENTIAL_CLIENT_LABEL;
-}

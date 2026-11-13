@@ -13,7 +13,11 @@ export const QUALIFICATIONS = [
 ] as const;
 export type Qualification = (typeof QUALIFICATIONS)[number];
 
-export const INDIAN_CITIES = [
+/**
+ * Cities the apply form suggests as the applicant types. Applicants can still type
+ * any other city. Not a validation list.
+ */
+export const CITY_SUGGESTIONS = [
   "Mumbai",
   "Thane",
   "Navi Mumbai",
@@ -27,16 +31,50 @@ export const INDIAN_CITIES = [
   "Kolkata",
   "Ahmedabad",
   "Surat",
+  "Vadodara",
   "Jaipur",
   "Lucknow",
   "Indore",
   "Nagpur",
+  "Nashik",
   "Chandigarh",
   "Kochi",
   "Bhopal",
-  "Other",
 ] as const;
-export type IndianCity = (typeof INDIAN_CITIES)[number];
+
+/** Old or alternate names mapped to one form, so the admin city filter groups them. Keys are lowercase. */
+const CITY_ALIASES: Record<string, string> = {
+  bombay: "Mumbai",
+  bangalore: "Bengaluru",
+  gurgaon: "Gurugram",
+  calcutta: "Kolkata",
+  madras: "Chennai",
+  poona: "Pune",
+  baroda: "Vadodara",
+  cochin: "Kochi",
+};
+
+export const CITY_MAX_LENGTH = 60;
+export const CITY_RE = /^[A-Za-z][A-Za-z .'-]*$/;
+
+/** Comparison key that ignores letter case, spaces and . - ' only. Digits still count. */
+const cityKey = (value: string) => value.toLowerCase().replace(/[\s.'-]/g, "");
+
+/**
+ * Cleans a typed city: trims, collapses spaces, maps old names ("Bombay" → "Mumbai"),
+ * matches a suggested city whatever the letter case or spacing ("navi  mumbai" → "Navi Mumbai"),
+ * else capitalises each word ("vapi" → "Vapi").
+ */
+export function normalizeCity(raw: string): string {
+  const tidy = raw.trim().replace(/\s+/g, " ");
+  if (!tidy) return "";
+  const lower = tidy.toLowerCase();
+  if (CITY_ALIASES[lower]) return CITY_ALIASES[lower];
+  const key = cityKey(tidy);
+  const known = CITY_SUGGESTIONS.find((c) => cityKey(c) === key);
+  if (known) return known;
+  return lower.replace(/(^|[ \-'.])([a-z])/g, (_m, sep: string, ch: string) => sep + ch.toUpperCase());
+}
 
 export const NOTICE_PERIODS = [0, 15, 30, 60, 90] as const;
 export type NoticePeriod = (typeof NOTICE_PERIODS)[number];

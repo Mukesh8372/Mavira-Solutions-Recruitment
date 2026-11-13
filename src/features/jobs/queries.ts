@@ -5,7 +5,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { EXPERIENCE_OPTIONS, JOBS_PER_PAGE, type JobFilters } from "@/features/jobs/display";
 
-export const jobInclude = { company: true, department: true, industry: true } satisfies Prisma.JobInclude;
+export const jobInclude = { department: true, industry: true } satisfies Prisma.JobInclude;
 export type JobWithRelations = Prisma.JobGetPayload<{ include: typeof jobInclude }>;
 
 /** Jobs that accept applications: PUBLISHED and not past their apply-by date. */
@@ -24,8 +24,7 @@ function buildWhere(filters: JobFilters, now: Date): Prisma.JobWhereInput {
         { title: insensitive(filters.q) },
         { description: insensitive(filters.q) },
         { location: insensitive(filters.q) },
-        // Never match a hidden client name.
-        { confidential: false, company: { name: insensitive(filters.q) } },
+        { employerLabel: insensitive(filters.q) },
       ],
     });
   }

@@ -170,16 +170,15 @@ model Job {
   featured           Boolean          @default(false)
   urgent             Boolean          @default(false)
   validThrough       DateTime?
-  confidential       Boolean          @default(false) // hide the client name on public pages
-  confidentialLabel  String? // shown instead of the client name, e.g. "Leading private bank"
+  employerLabel      String // how the hiring company is shown publicly, e.g. "Leading private bank"
   viewCount          Int              @default(0)
   seoTitle           String?
   seoDescription     String?
   publishedAt        DateTime?
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
-  companyId          String
-  company            Company          @relation(fields: [companyId], references: [id])
+  companyId          String? // legacy client link, no longer set by the admin
+  company            Company?         @relation(fields: [companyId], references: [id])
   postedById         String?
   postedBy           User?            @relation("PostedJobs", fields: [postedById], references: [id])
   applications       Application[]

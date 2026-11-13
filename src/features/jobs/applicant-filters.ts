@@ -1,4 +1,4 @@
-import { AGE_MAX, AGE_MIN, CTC_MAX_LPA, EXPERIENCE_MAX, INDIAN_CITIES, NOTICE_PERIODS, QUALIFICATIONS, parseDateOnly } from "@/features/jobs/options";
+import { AGE_MAX, AGE_MIN, CITY_MAX_LENGTH, CITY_RE, CTC_MAX_LPA, EXPERIENCE_MAX, NOTICE_PERIODS, QUALIFICATIONS, normalizeCity, parseDateOnly } from "@/features/jobs/options";
 import { APPLICATION_STATUSES } from "@/features/jobs/admin-schemas";
 
 /**
@@ -21,7 +21,7 @@ export type ApplicantFilters = {
   expMax?: number;
   ctcMin?: number;
   ctcMax?: number;
-  city?: (typeof INDIAN_CITIES)[number];
+  city?: string;
   qualification?: (typeof QUALIFICATIONS)[number];
   notice?: (typeof NOTICE_PERIODS)[number];
   from?: string; // YYYY-MM-DD, IST
@@ -61,6 +61,13 @@ function oneOf<T extends readonly unknown[]>(list: T, v: unknown): T[number] | u
 
 const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 
+/** A city typed or chosen in the filter, cleaned the same way as on the apply form. */
+function cityParam(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const city = normalizeCity(value);
+  return city.length >= 2 && city.length <= CITY_MAX_LENGTH && CITY_RE.test(city) ? city : undefined;
+}
+
 export function parseApplicantFilters(sp: SearchParams): ApplicantFilters {
   const job = first(sp.job);
   const category = first(sp.category);
@@ -76,7 +83,7 @@ export function parseApplicantFilters(sp: SearchParams): ApplicantFilters {
     expMax: int(first(sp.expMax), 0, EXPERIENCE_MAX),
     ctcMin: lpa(first(sp.ctcMin)),
     ctcMax: lpa(first(sp.ctcMax)),
-    city: oneOf(INDIAN_CITIES, first(sp.city)),
+    city: cityParam(first(sp.city)),
     qualification: oneOf(QUALIFICATIONS, first(sp.qualification)),
     notice: notice === undefined ? undefined : oneOf(NOTICE_PERIODS, notice),
     from: dateOnly(first(sp.from)),

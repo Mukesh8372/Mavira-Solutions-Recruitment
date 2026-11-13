@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { AGE_MAX, AGE_MIN, EXPERIENCE_MAX, INDIAN_CITIES, NOTICE_PERIODS, QUALIFICATIONS, noticePeriodLabel } from "@/features/jobs/options";
+import { AGE_MAX, AGE_MIN, EXPERIENCE_MAX, NOTICE_PERIODS, QUALIFICATIONS, noticePeriodLabel } from "@/features/jobs/options";
 import { APPLICATION_STATUSES } from "@/features/jobs/admin-schemas";
 import { activeApplicantFilterCount, type ApplicantFilters } from "@/features/jobs/applicant-filters";
 import { labelApplicationStatus } from "@/lib/format";
@@ -14,7 +14,23 @@ type Option = { id: string; name: string };
  * Plain GET form: every filter is a query parameter, so the view can be bookmarked
  * and works without JavaScript. Submitting resets to page 1 (no `page` input).
  */
-export function ApplicantFilterBar({ filters, jobs, categories }: { filters: ApplicantFilters; jobs: { id: string; title: string; location: string }[]; categories: Option[] }) {
+export function ApplicantFilterBar({
+  filters,
+  jobs,
+  categories,
+  cities,
+}: {
+  filters: ApplicantFilters;
+  jobs: { id: string; title: string; location: string }[];
+  categories: Option[];
+  cities: { city: string; count: number }[];
+}) {
+  // Keep a city from the URL selectable even when no applicant has it any more.
+  const cityOptions =
+    filters.city && !cities.some((c) => c.city.toLowerCase() === filters.city!.toLowerCase())
+      ? [...cities, { city: filters.city, count: 0 }]
+      : cities;
+  const selectedCity = cityOptions.find((c) => c.city.toLowerCase() === filters.city?.toLowerCase())?.city ?? "";
   const active = activeApplicantFilterCount(filters);
   return (
     <form method="get" action="/admin/applications" className="mb-5 rounded-card border border-line bg-surface p-4 shadow-soft" aria-label="Filter applications">
@@ -61,11 +77,11 @@ export function ApplicantFilterBar({ filters, jobs, categories }: { filters: App
         <RangePair label="Expected CTC (LPA)" minName="ctcMin" maxName="ctcMax" min={0} max={1000} step="0.1" minValue={filters.ctcMin} maxValue={filters.ctcMax} />
         <div>
           <Label htmlFor="f-city">City</Label>
-          <Select id="f-city" name="city" defaultValue={filters.city ?? ""}>
+          <Select id="f-city" name="city" defaultValue={selectedCity}>
             <option value="">Any city</option>
-            {INDIAN_CITIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
+            {cityOptions.map((c) => (
+              <option key={c.city} value={c.city}>
+                {c.city} ({c.count})
               </option>
             ))}
           </Select>
